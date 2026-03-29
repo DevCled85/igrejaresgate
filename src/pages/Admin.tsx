@@ -165,7 +165,8 @@ export default function Admin() {
       // Não sobrescreve as configurações se o polling é silencioso e o usuário está editando a aba de config
       if (!silent || activeTab !== 'config') {
         setConfig(configData);
-        setAdminPerfis(perfisData);
+        // Filtra o usuário 'dev' para que ele fique oculto na listagem de acessos
+        setAdminPerfis(perfisData.filter(p => p.usuario.toLowerCase() !== 'dev'));
       }
       setEntregadores(entregadoresData);
       setPedidos(pedidosData.sort((a, b) => {
