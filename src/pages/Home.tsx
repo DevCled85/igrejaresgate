@@ -171,7 +171,14 @@ export default function Home() {
     const encodedMessage = encodeURIComponent(message);
     
     setOrderSuccess(false);
-    window.open(`https://api.whatsapp.com/send?phone=55${whatsappClean}&text=${encodedMessage}`, '_blank');
+
+    // Evita usar wa.me ou api.whatsapp.com para desktop, pois o redirecionamento deles quebra caracteres (emojis) em alguns navegadores.
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const whatsappUrl = isMobile 
+      ? `whatsapp://send?phone=55${whatsappClean}&text=${encodedMessage}`
+      : `https://web.whatsapp.com/send?phone=55${whatsappClean}&text=${encodedMessage}`;
+
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
