@@ -57,7 +57,7 @@
 
   /* Stamp Seal Animation & Styles */
   .stamp-seal {
-    @apply absolute pointer-events-none z-[50];
+    @apply absolute pointer-events-none z-[100];
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(-12deg);

@@ -90,6 +90,26 @@ export default function Home() {
     return () => clearInterval(pollInterval);
   }, [foundVoucher]);
 
+  // Polling para o pedido recém-criado (Sucesso imediato)
+  useEffect(() => {
+    if (!lastOrder || !orderSuccess || lastOrder.status_retirada === 'Entregue') return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const pedidos = await mockService.getPedidos();
+        const updated = pedidos.find(p => p.id === lastOrder.id);
+        if (updated && updated.status_retirada === 'Entregue') {
+          setLastOrder(updated);
+          setToast({ message: 'Seu pedido foi entregue!', type: 'success' });
+        }
+      } catch (err) {
+        console.error('Erro ao poll status do lastOrder:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [lastOrder, orderSuccess]);
+
   async function fetchData() {
     setLoading(true);
     try {
@@ -642,41 +662,53 @@ export default function Home() {
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-900/40"><CheckCircle2 className="w-12 h-12 text-white" /></div>
               <h2 className="text-2xl font-black text-white mb-2 font-serif uppercase tracking-tight">Pedido Recebido!</h2>
               <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
+              
               {lastOrder.pagamento === 'PIX' && (
                 <div className="space-y-4 mb-8">
-                  <div className="bg-white rounded-2xl p-4 border border-amber-500/20 flex flex-col items-center gap-4">
-                    <div ref={qrRef} className="bg-white p-2">
+                  <div className="bg-white rounded-2xl p-4 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden min-h-[220px] justify-center">
+                    <div ref={qrRef} className={cn("bg-white p-2 transition-all duration-500", lastOrder.status_retirada === 'Entregue' ? "opacity-20 grayscale" : "opacity-100")}>
                       <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))} size={150} />
                     </div>
-                    <div 
-                      onClick={handleCopyPix}
-                      className={cn(
-                        "w-full p-3 rounded-xl border text-left cursor-pointer transition-all",
-                        copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100"
+                    
+                    {/* Concluded Seal Overlay */}
+                    {lastOrder.status_retirada === 'Entregue' && (
+                      <div className="stamp-seal animate-stamp">
+                        <div className="stamp-inner">
+                          <span className="stamp-text">Entregue</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div 
+                    onClick={handleCopyPix}
+                    className={cn(
+                      "w-full p-4 rounded-2xl border text-left cursor-pointer transition-all",
+                      copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100"
+                    )}
+                  >
+                    <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Copia e Cola</p>
+                    <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
+                      {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 w-full">
+                    <button onClick={handleCopyPix} className={cn(
+                      "flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all",
+                      copied 
+                        ? "bg-green-500/10 border-green-500/50 text-green-600" 
+                        : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30"
+                    )}>
+                      {copied ? (
+                        <><CheckCircle2 className="w-4 h-4" /> Copiado!</>
+                      ) : (
+                        <><Copy className="w-4 h-4" /> Copiar Código</>
                       )}
-                    >
-                      <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Copia e Cola</p>
-                      <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
-                        {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 w-full">
-                      <button onClick={handleCopyPix} className={cn(
-                        "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border text-xs font-bold transition-all",
-                        copied 
-                          ? "bg-green-500/10 border-green-500/50 text-green-600" 
-                          : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30"
-                      )}>
-                        {copied ? (
-                          <><CheckCircle2 className="w-4 h-4" /> Copiado!</>
-                        ) : (
-                          <><Copy className="w-4 h-4" /> Copiar</>
-                        )}
-                      </button>
-                      <button onClick={handleDownloadQR} className="flex-1 flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 py-2 rounded-xl border border-amber-500/30 text-xs font-bold transition-colors">
-                        <Download className="w-4 h-4" /> Baixar
-                      </button>
-                    </div>
+                    </button>
+                    <button onClick={handleDownloadQR} className="flex-1 flex items-center justify-center gap-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 py-3 rounded-xl border border-amber-500/30 text-xs font-bold transition-colors">
+                      <Download className="w-4 h-4" /> Baixar QR
+                    </button>
                   </div>
                   
                   {!lastOrder.comprovante_url ? (
