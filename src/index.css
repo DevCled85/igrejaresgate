@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #d4af37;
+  --color-gold-hover: #b8860b;
+  --color-espresso: #0f0a08;
+  --color-espresso-light: #1a1210;
+  --color-espresso-border: #2a1d19;
+  --font-serif: "Playfair Display", serif;
+}
+
+@layer base {
+  body {
+    @apply bg-espresso text-stone-100 min-h-screen;
+    background-image: radial-gradient(circle at center, rgba(38, 26, 21, 0.4) 0%, rgba(15, 10, 8, 1) 100%);
+    background-attachment: fixed;
+  }
+}
+
+.wood-card {
+  @apply bg-espresso-light/90 border border-espresso-border backdrop-blur-md shadow-2xl rounded-2xl;
+  background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+}
+
+.gold-button {
+  @apply bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-amber-950/40 uppercase tracking-wider;
+}
+
+.gold-outline {
+  @apply border-2 border-amber-600/50 text-amber-500 hover:bg-amber-600 hover:text-white font-bold py-2 px-4 rounded-xl transition-all duration-300;
+}
+
+.input-field {
+  @apply w-full bg-espresso border border-espresso-border rounded-xl py-3 px-4 text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-600/50 focus:border-transparent transition-all;
+}
+
+.label-text {
+  @apply block text-amber-500/80 text-[10px] font-bold mb-2 uppercase tracking-widest;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-espresso;
+}
+@layer components {
+  .row-pending-receipt {
+    animation: glow-pulse 2s infinite ease-in-out;
+    @apply border-y-2 border-amber-500/50 shadow-[inset_0_0_20px_rgba(245,158,11,0.15)];
+  }
+  
+  .row-paid {
+    @apply bg-green-900/20 hover:bg-green-900/30 transition-all border-y border-green-500/20;
+  }
+}
+
+@keyframes glow-pulse {
+  0% { background-color: rgba(245, 158, 11, 0.03); }
+  50% { background-color: rgba(245, 158, 11, 0.15); }
+  100% { background-color: rgba(245, 158, 11, 0.03); }
+}
