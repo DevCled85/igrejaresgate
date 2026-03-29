@@ -32,7 +32,8 @@ import {
   QrCode,
   Maximize,
   Search,
-  AlertCircle
+  AlertCircle,
+  Menu
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
@@ -46,6 +47,7 @@ export default function Admin() {
   const [config, setConfig] = useState<Configuracoes | null>(null);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [showNotificacoes, setShowNotificacoes] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const poppedNotifIds = React.useRef<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -411,43 +413,72 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-espresso flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-espresso-light border-r border-espresso-border p-6 flex flex-col">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 overflow-hidden rounded-lg shadow-lg shadow-amber-950/20">
+      {/* Mobile Top Header */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-espresso-light border-b border-espresso-border sticky top-0 z-[70] shadow-xl">
+        <div className="flex items-center gap-3 relative z-[71]">
+          <div className="w-8 h-8 overflow-hidden rounded-lg shadow-lg">
             <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-lg font-bold text-white font-serif leading-tight">Igreja Resgate</h2>
-            <p className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">Admin Panel</p>
+          <h2 className="text-white font-serif font-bold leading-none">Igreja Resgate</h2>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+          className="p-2 text-stone-400 hover:text-amber-500 transition-colors relative z-[71]"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay for Mobile */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[60] md:hidden backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed md:static inset-x-0 top-[73px] z-[65] w-full md:w-64 bg-espresso-light md:border-r border-b md:border-b-0 border-espresso-border p-6 flex flex-col transition-transform duration-300 ease-in-out md:translate-y-0 md:translate-x-0 h-[auto] md:h-full max-h-[calc(100vh-73px)] shadow-2xl md:shadow-none",
+        !isMobileMenuOpen ? "-translate-y-[150%] md:-translate-y-0" : "translate-y-0"
+      )}>
+        <div className="hidden md:flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 overflow-hidden rounded-lg shadow-lg shadow-amber-950/20">
+              <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-lg font-bold text-white font-serif leading-tight">Igreja Resgate</h2>
+              <p className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">Admin Panel</p>
+            </div>
           </div>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
           <button 
-            onClick={() => setActiveTab('dashboard')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-amber-600 text-white' : 'text-stone-400 hover:bg-espresso-border'}`}
+            onClick={() => { setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'dashboard' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-stone-400 hover:bg-espresso-border'}`}
           >
             <LayoutDashboard className="w-5 h-5" />
             <span className="font-medium">Dashboard</span>
           </button>
           <button 
-            onClick={() => setActiveTab('orders')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'orders' ? 'bg-amber-600 text-white' : 'text-stone-400 hover:bg-stone-800'}`}
+            onClick={() => { setActiveTab('orders'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'orders' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-stone-400 hover:bg-stone-800'}`}
           >
             <ListOrdered className="w-5 h-5" />
             <span className="font-medium">Pedidos</span>
           </button>
           <button 
-            onClick={() => setActiveTab('drivers')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'drivers' ? 'bg-amber-600 text-white' : 'text-stone-400 hover:bg-stone-800'}`}
+            onClick={() => { setActiveTab('drivers'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'drivers' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-stone-400 hover:bg-stone-800'}`}
           >
             <Truck className="w-5 h-5" />
             <span className="font-medium">Entregadores</span>
           </button>
           <button 
-            onClick={() => setActiveTab('config')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'config' ? 'bg-amber-600 text-white' : 'text-stone-400 hover:bg-stone-800'}`}
+            onClick={() => { setActiveTab('config'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'config' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-stone-400 hover:bg-stone-800'}`}
           >
             <Settings className="w-5 h-5" />
             <span className="font-medium">Configurações</span>
@@ -456,10 +487,10 @@ export default function Admin() {
 
         <button 
           onClick={handleLogout}
-          className="mt-auto flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-900/20 rounded-lg transition-all"
+          className="mt-4 flex items-center justify-center md:justify-start gap-3 px-4 py-3 text-red-500 hover:bg-red-900/20 rounded-lg transition-all"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">Sair</span>
+          <span className="font-medium">Sair do Sistema</span>
         </button>
       </aside>
 
@@ -652,7 +683,8 @@ export default function Admin() {
                 </h3>
                 <div className="wood-card overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    {/* Desktop View */}
+                    <table className="hidden lg:table w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-espresso-light/50 text-stone-400 uppercase text-[10px] tracking-widest font-bold">
                           <th className="px-6 py-3">Cliente</th>
@@ -718,6 +750,58 @@ export default function Admin() {
                         )}
                       </tbody>
                     </table>
+
+                    {/* Mobile View */}
+                    <div className="lg:hidden flex flex-col gap-4">
+                      {pedidos.filter(p => p.status_pagamento === 'Pago' && (p.status_retirada || 'Pendente') === 'Pendente').length > 0 ? (
+                        pedidos
+                          .filter(p => p.status_pagamento === 'Pago' && (p.status_retirada || 'Pendente') === 'Pendente')
+                          .sort((a, b) => {
+                            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                            return dateB - dateA;
+                          })
+                          .slice(0, 10)
+                          .map((p) => (
+                            <div key={p.id} className="p-4 flex flex-col gap-3 bg-stone-900 border border-stone-800 rounded-xl shadow-md">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-bold text-white text-lg">{p.nome}</p>
+                                  <p className="text-amber-500 font-mono text-sm">{p.numero_pedido}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-green-500 font-black text-lg">{formatCurrency(p.quantidade * (config?.valor || 0))}</p>
+                                  <p className="text-stone-400 text-xs">{p.quantidade}x Banda(s)</p>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className="bg-amber-900/30 text-amber-500 px-2 py-1 rounded font-mono text-xs font-bold flex items-center gap-1">
+                                  Voucher: {p.voucher || '---'}
+                                </span>
+                                <span className="text-stone-500 text-xs ml-auto">
+                                  {p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : ''}
+                                </span>
+                              </div>
+                              <div className="mt-2">
+                                <button 
+                                  onClick={() => toggleRetirada(p.id, p.status_retirada || 'Pendente')}
+                                  className={`w-full py-3 text-xs font-bold uppercase rounded-lg transition-all flex justify-center items-center gap-2 ${
+                                    (p.status_retirada || 'Pendente') === 'Entregue' 
+                                      ? 'bg-green-900/30 text-green-500' 
+                                      : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
+                                  }`}
+                                >
+                                  {p.status_retirada || 'Pendente'}
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                      ) : (
+                        <div className="p-8 text-center text-stone-500 italic">
+                          Nenhum pedido pago aguardando retirada.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -728,7 +812,8 @@ export default function Admin() {
                 </h3>
                 <div className="wood-card overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    {/* Desktop View */}
+                    <table className="hidden lg:table w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-stone-800/50 text-stone-400 uppercase text-[10px] tracking-widest font-bold">
                           <th className="px-6 py-3">Cliente</th>
@@ -814,6 +899,69 @@ export default function Admin() {
                         )}
                       </tbody>
                     </table>
+
+                    {/* Mobile View */}
+                    <div className="lg:hidden flex flex-col gap-4 mt-2">
+                      {pedidos.filter(p => (p.status_retirada || 'Pendente') === 'Entregue').length > 0 ? (
+                        pedidos
+                          .filter(p => (p.status_retirada || 'Pendente') === 'Entregue')
+                          .sort((a, b) => {
+                            const dateA = a.delivered_at ? new Date(a.delivered_at).getTime() : 0;
+                            const dateB = b.delivered_at ? new Date(b.delivered_at).getTime() : 0;
+                            return dateB - dateA;
+                          })
+                          .slice(0, 10)
+                          .map((p) => (
+                            <div key={p.id} className="p-4 flex flex-col gap-3 bg-stone-900 border border-stone-800 rounded-xl shadow-md">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-bold text-white text-lg">{p.nome}</p>
+                                  <p className="text-amber-500 font-mono text-sm">{p.numero_pedido}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-green-500 font-black text-lg">{formatCurrency(p.quantidade * (config?.valor || 0))}</p>
+                                  <p className="text-stone-400 text-xs">{p.quantidade}x Banda(s)</p>
+                                </div>
+                              </div>
+                              {p.tipo_entrega === 'Entrega' && (
+                                <div className="flex items-center gap-2 bg-stone-800/50 p-2 rounded-lg mt-1 w-fit">
+                                  <User className="w-3 h-3 text-stone-500" />
+                                  <p className="text-stone-300 text-xs">
+                                    Entregador: {entregadores.find(e => e.id === p.entregador_id)?.nome || 'N/A'}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="bg-amber-900/30 text-amber-500 px-2 py-1 rounded font-mono text-xs font-bold">
+                                  Voucher: {p.voucher || '---'}
+                                </span>
+                                <span className="text-stone-500 text-[10px] ml-auto font-mono">
+                                  {p.delivered_at ? new Date(p.delivered_at).toLocaleString('pt-BR', {
+                                    day: '2-digit', month: '2-digit', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                  }) : ''}
+                                </span>
+                              </div>
+                              <div className="mt-2">
+                                <button 
+                                  onClick={() => toggleRetirada(p.id, p.status_retirada || 'Pendente')}
+                                  className={`w-full py-3 text-xs font-bold uppercase rounded-lg transition-all flex justify-center items-center gap-2 ${
+                                    (p.status_retirada || 'Pendente') === 'Entregue' 
+                                      ? 'bg-green-900/30 text-green-500' 
+                                      : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
+                                  }`}
+                                >
+                                  {p.status_retirada || 'Pendente'}
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                      ) : (
+                        <div className="p-8 text-center text-stone-500 italic">
+                          Nenhum pedido entregue ainda.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -828,155 +976,293 @@ export default function Admin() {
               exit={{ opacity: 0, y: -10 }}
               className="wood-card overflow-hidden"
             >
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-stone-800/50 text-amber-500 uppercase text-xs tracking-widest font-bold">
-                      <th className="px-6 py-4">Cliente</th>
-                      <th className="px-6 py-4">Tipo/Endereço</th>
-                      <th className="px-6 py-4">Entregador</th>
-                      <th className="px-6 py-4">Pedido</th>
-                      <th className="px-6 py-4">Valor</th>
-                      <th className="px-6 py-4">Pagamento</th>
-                      <th className="px-6 py-4">Retirada</th>
-                      <th className="px-6 py-4">Data</th>
-                      <th className="px-6 py-4 text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-800">
-                    {pedidos.map((p) => (
-                      <tr 
-                        key={p.id} 
-                        className={cn(
-                          "transition-all duration-300",
-                          p.status_pagamento === 'Pago' 
-                            ? "row-paid" 
-                            : (p.comprovante_url ? "row-pending-receipt" : "hover:bg-stone-800/30")
-                        )}
-                      >
-                        <td className="px-6 py-4">
-                          <p className="text-amber-500 font-mono font-bold text-xs mb-1">{p.numero_pedido}</p>
-                          <p className="font-bold text-white">{p.nome}</p>
-                          <a 
-                            href={formatWhatsApp(p.whatsapp)} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-stone-400 text-sm flex items-center gap-1 hover:text-green-500"
-                          >
-                            <MessageCircle className="w-3 h-3" /> {p.whatsapp}
-                          </a>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${p.tipo_entrega === 'Entrega' ? 'bg-blue-900/30 text-blue-400' : 'bg-stone-700 text-stone-300'}`}>
-                            {p.tipo_entrega}
-                          </span>
-                          {p.endereco && (
+                <div className="overflow-x-auto">
+                  {/* Desktop View */}
+                  <table className="hidden lg:table w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-stone-800/50 text-amber-500 uppercase text-xs tracking-widest font-bold">
+                        <th className="px-6 py-4">Cliente</th>
+                        <th className="px-6 py-4">Tipo/Endereço</th>
+                        <th className="px-6 py-4">Entregador</th>
+                        <th className="px-6 py-4">Pedido</th>
+                        <th className="px-6 py-4">Valor</th>
+                        <th className="px-6 py-4">Pagamento</th>
+                        <th className="px-6 py-4">Retirada</th>
+                        <th className="px-6 py-4">Data</th>
+                        <th className="px-6 py-4 text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-800">
+                      {pedidos.map((p) => (
+                        <tr 
+                          key={p.id} 
+                          className={cn(
+                            "transition-all duration-300",
+                            p.status_pagamento === 'Pago' 
+                              ? "row-paid" 
+                              : (p.comprovante_url ? "row-pending-receipt" : "hover:bg-stone-800/30")
+                          )}
+                        >
+                          <td className="px-6 py-4">
+                            <p className="text-amber-500 font-mono font-bold text-xs mb-1">{p.numero_pedido}</p>
+                            <p className="font-bold text-white">{p.nome}</p>
                             <a 
-                              href={formatMapsUrl(p.endereco)} 
+                              href={formatWhatsApp(p.whatsapp)} 
                               target="_blank" 
                               rel="noreferrer"
-                              className="text-stone-400 text-xs mt-1 max-w-xs truncate flex items-center gap-1 hover:text-blue-500"
+                              className="text-stone-400 text-sm flex items-center gap-1 hover:text-green-500"
                             >
-                              <MapPin className="w-3 h-3" /> {p.endereco}
+                              <MessageCircle className="w-3 h-3" /> {p.whatsapp}
                             </a>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          {p.tipo_entrega === 'Entrega' ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 bg-stone-800 rounded-full flex items-center justify-center border border-stone-700">
-                                <User className="w-4 h-4 text-stone-500" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${p.tipo_entrega === 'Entrega' ? 'bg-blue-900/30 text-blue-400' : 'bg-stone-700 text-stone-300'}`}>
+                              {p.tipo_entrega}
+                            </span>
+                            {p.endereco && (
+                              <a 
+                                href={formatMapsUrl(p.endereco)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-stone-400 text-xs mt-1 max-w-xs truncate flex items-center gap-1 hover:text-blue-500"
+                              >
+                                <MapPin className="w-3 h-3" /> {p.endereco}
+                              </a>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {p.tipo_entrega === 'Entrega' ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-stone-800 rounded-full flex items-center justify-center border border-stone-700">
+                                  <User className="w-4 h-4 text-stone-500" />
+                                </div>
+                                <div>
+                                  <p className="text-white text-sm font-bold">
+                                    {entregadores.find(e => e.id === p.entregador_id)?.nome || 'Não atribuído'}
+                                  </p>
+                                  {entregadores.find(e => e.id === p.entregador_id)?.anonimo && (
+                                    <span className="text-[9px] bg-stone-700 text-stone-400 px-1 rounded uppercase font-bold">Anônimo</span>
+                                  )}
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-white text-sm font-bold">
-                                  {entregadores.find(e => e.id === p.entregador_id)?.nome || 'Não atribuído'}
-                                </p>
-                                {entregadores.find(e => e.id === p.entregador_id)?.anonimo && (
-                                  <span className="text-[9px] bg-stone-700 text-stone-400 px-1 rounded uppercase font-bold">Anônimo</span>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-stone-600 text-xs italic">N/A</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-white font-bold">{p.quantidade}x Banda(s)</p>
-                          <p className="text-stone-500 text-xs uppercase">{p.pagamento}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-white font-bold">{formatCurrency(p.quantidade * (config?.valor || 0))}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button 
-                            onClick={() => markAsPaid(p.id, p.status_pagamento)}
-                            disabled={p.status_pagamento === 'Pago'}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                              p.status_pagamento === 'Pago' 
-                                ? 'bg-green-900/30 text-green-500 cursor-default' 
-                                : 'bg-red-900/30 text-red-500 hover:bg-red-900/50'
-                            }`}
-                          >
-                            {p.status_pagamento === 'Pago' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                            {p.status_pagamento}
-                          </button>
-                          {p.comprovante_url && (
+                            ) : (
+                              <span className="text-stone-600 text-xs italic">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-white font-bold">{p.quantidade}x Banda(s)</p>
+                            <p className="text-stone-500 text-xs uppercase">{p.pagamento}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-white font-bold">{formatCurrency(p.quantidade * (config?.valor || 0))}</p>
+                          </td>
+                          <td className="px-6 py-4">
                             <button 
-                              onClick={() => setViewingComprovante(p.comprovante_url!)}
-                              className="mt-2 flex items-center gap-1.5 text-amber-500 hover:text-amber-400 text-[10px] font-bold uppercase transition-colors"
+                              onClick={() => markAsPaid(p.id, p.status_pagamento)}
+                              disabled={p.status_pagamento === 'Pago'}
+                              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                                p.status_pagamento === 'Pago' 
+                                  ? 'bg-green-900/30 text-green-500 cursor-default' 
+                                  : 'bg-red-900/30 text-red-500 hover:bg-red-900/50'
+                              }`}
                             >
-                              <ImageIcon className="w-3.2 h-3.2" /> Ver Comprovante
+                              {p.status_pagamento === 'Pago' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                              {p.status_pagamento}
                             </button>
-                          )}
+                            {p.comprovante_url && (
+                              <button 
+                                onClick={() => setViewingComprovante(p.comprovante_url!)}
+                                className="mt-2 flex items-center gap-1.5 text-amber-500 hover:text-amber-400 text-[10px] font-bold uppercase transition-colors"
+                              >
+                                <ImageIcon className="w-3.2 h-3.2" /> Ver Comprovante
+                              </button>
+                            )}
+                            {p.voucher && (
+                              <p className="mt-1 text-[10px] font-mono text-amber-500 font-bold">Voucher: {p.voucher}</p>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button 
+                              onClick={() => toggleRetirada(p.id, p.status_retirada || 'Pendente')}
+                              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                                (p.status_retirada || 'Pendente') === 'Entregue' 
+                                  ? 'bg-green-900/30 text-green-500' 
+                                  : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
+                              }`}
+                            >
+                              {(p.status_retirada || 'Pendente') === 'Entregue' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                              {p.status_retirada || 'Pendente'}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-stone-400 text-xs">
+                              {p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '---'}
+                            </p>
+                            {p.created_at && (
+                              <p className="text-stone-600 text-[10px]">
+                                {new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            )}
+                            {p.status_retirada === 'Entregue' && p.delivered_at && (
+                              <p className="text-green-600 text-[9px] mt-1 font-bold">
+                                Entregue: {new Date(p.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2">
+                            <button 
+                              onClick={() => setEditingPedido(p)}
+                              className="p-2 text-stone-500 hover:text-amber-500 transition-colors"
+                              title="Editar Pedido"
+                            >
+                              <Edit2 className="w-5 h-5" />
+                            </button>
+                            <button onClick={() => deletePedido(p.id)} className="p-2 text-stone-500 hover:text-red-500 transition-colors">
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Mobile View */}
+                  <div className="lg:hidden flex flex-col gap-4 mt-2">
+                    {pedidos.length > 0 ? pedidos.map((p) => (
+                      <div 
+                        key={p.id} 
+                        className={cn(
+                          "p-4 flex flex-col gap-4 rounded-xl shadow-md border transition-all duration-300",
+                          p.status_pagamento === 'Pago' 
+                            ? "bg-[#161a16] border-green-900/30" 
+                            : (p.comprovante_url ? "bg-[#251b14] border-amber-500/50 row-pending-receipt" : "bg-stone-900/80 border-stone-800")
+                        )}
+                      >
+                        {/* Cabecalho do Card */}
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded inline-block mb-1 ${p.tipo_entrega === 'Entrega' ? 'bg-blue-900/30 text-blue-400' : 'bg-stone-700 text-stone-300'}`}>
+                              {p.tipo_entrega}
+                            </span>
+                            <p className="font-bold text-white text-xl leading-tight">{p.nome}</p>
+                            <p className="text-amber-500 font-mono text-xs font-bold mt-1">{p.numero_pedido}</p>
+                            <a 
+                              href={formatWhatsApp(p.whatsapp)} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-stone-400 text-xs flex items-center gap-1 mt-1 hover:text-green-500"
+                            >
+                              <MessageCircle className="w-3 h-3" /> {p.whatsapp}
+                            </a>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-green-500 font-black text-xl">{formatCurrency(p.quantidade * (config?.valor || 0))}</p>
+                            <p className="text-stone-400 text-xs">{p.quantidade}x Banda(s)</p>
+                            <p className="text-stone-500 text-[10px] mt-1 uppercase font-bold">{p.pagamento}</p>
+                          </div>
+                        </div>
+
+                        {/* Endereço / Entregador se aplicável */}
+                        {p.tipo_entrega === 'Entrega' && (
+                          <div className="bg-stone-800/50 p-3 rounded-xl border border-stone-800 space-y-2">
+                            {p.endereco && (
+                              <a 
+                                href={formatMapsUrl(p.endereco)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-stone-300 text-xs flex items-start gap-2 hover:text-blue-500"
+                              >
+                                <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" /> 
+                                <span>{p.endereco}</span>
+                              </a>
+                            )}
+                            <div className="flex items-center gap-2 border-t border-stone-700 pt-2 mt-2">
+                              <User className="w-3 h-3 text-stone-500" />
+                              <p className="text-stone-400 text-xs">
+                                Entregador: <span className="text-stone-300 font-bold">{entregadores.find(e => e.id === p.entregador_id)?.nome || 'Não atribuído'}</span>
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Status Toggles e Ações */}
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div className="flex flex-col gap-2">
+                            <button 
+                              onClick={() => markAsPaid(p.id, p.status_pagamento)}
+                              disabled={p.status_pagamento === 'Pago'}
+                              className={`w-full py-3 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all ${
+                                p.status_pagamento === 'Pago' 
+                                  ? 'bg-green-900/20 text-green-500 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
+                                  : 'bg-red-900/30 text-red-500 hover:bg-red-900/50 border border-red-500/20'
+                              }`}
+                            >
+                              {p.status_pagamento === 'Pago' ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                              <span>Pgto: <span className="uppercase">{p.status_pagamento}</span></span>
+                            </button>
+                            
+                            {p.comprovante_url && (
+                              <button 
+                                onClick={() => setViewingComprovante(p.comprovante_url!)}
+                                className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-amber-500 rounded-lg border border-amber-500/20 flex items-center justify-center gap-2 text-xs font-bold uppercase transition-all"
+                              >
+                                <ImageIcon className="w-4 h-4" /> Comprovante
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <button 
+                              onClick={() => toggleRetirada(p.id, p.status_retirada || 'Pendente')}
+                              className={`w-full py-3 flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                                (p.status_retirada || 'Pendente') === 'Entregue' 
+                                  ? 'bg-green-900/20 text-green-500 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
+                                  : 'bg-stone-800 text-stone-300 hover:bg-stone-700 border border-stone-700'
+                              }`}
+                            >
+                              {(p.status_retirada || 'Pendente') === 'Entregue' ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                              <span>{p.tipo_entrega === 'Entrega' ? 'Entrega' : 'Retirada'}: {p.status_retirada || 'Pendente'}</span>
+                            </button>
+
+                            <div className="flex items-center gap-2 h-full">
+                              <button 
+                                onClick={() => setEditingPedido(p)}
+                                className="flex-1 py-2 flex items-center justify-center text-stone-400 bg-stone-800/50 hover:bg-stone-700 hover:text-white rounded-lg transition-colors border border-stone-800"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => deletePedido(p.id)} 
+                                className="flex-1 py-2 flex items-center justify-center text-stone-400 bg-stone-800/50 hover:bg-red-900/30 hover:text-red-500 rounded-lg transition-colors border border-stone-800"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Metadados: Data e Voucher (se houver) */}
+                        <div className="flex justify-between items-center border-t border-espresso-border pt-3 mt-1">
+                          <div className="text-[10px] text-stone-500 font-mono">
+                            {p.created_at ? new Date(p.created_at).toLocaleString('pt-BR', {
+                              day: '2-digit', month: '2-digit', year: 'numeric',
+                              hour: '2-digit', minute: '2-digit'
+                            }) : ''}
+                          </div>
                           {p.voucher && (
-                            <p className="mt-1 text-[10px] font-mono text-amber-500 font-bold">Voucher: {p.voucher}</p>
+                            <div className="bg-amber-900/20 text-amber-500 px-2 py-1 rounded shadow-inner font-mono text-[10px] uppercase font-bold flex items-center gap-1">
+                              <QrCode className="w-3 h-3" /> {p.voucher}
+                            </div>
                           )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <button 
-                            onClick={() => toggleRetirada(p.id, p.status_retirada || 'Pendente')}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                              (p.status_retirada || 'Pendente') === 'Entregue' 
-                                ? 'bg-green-900/30 text-green-500' 
-                                : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
-                            }`}
-                          >
-                            {(p.status_retirada || 'Pendente') === 'Entregue' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                            {p.status_retirada || 'Pendente'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-stone-400 text-xs">
-                            {p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '---'}
-                          </p>
-                          {p.created_at && (
-                            <p className="text-stone-600 text-[10px]">
-                              {new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          )}
-                          {p.status_retirada === 'Entregue' && p.delivered_at && (
-                            <p className="text-green-600 text-[9px] mt-1 font-bold">
-                              Entregue: {new Date(p.delivered_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button 
-                            onClick={() => setEditingPedido(p)}
-                            className="p-2 text-stone-500 hover:text-amber-500 transition-colors"
-                            title="Editar Pedido"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                          <button onClick={() => deletePedido(p.id)} className="p-2 text-stone-500 hover:text-red-500 transition-colors">
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="p-8 text-center text-stone-500 italic">
+                        Nenhum pedido cadastrado no momento.
+                      </div>
+                    )}
+                  </div>
+                </div>
             </motion.div>
           )}
 
@@ -1064,7 +1350,8 @@ export default function Admin() {
                       </button>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
+                      {/* Desktop View */}
+                      <table className="hidden lg:table w-full text-left border-collapse">
                         <thead>
                           <tr className="bg-stone-800/50 text-amber-500 uppercase text-[10px] tracking-widest font-bold">
                             <th className="px-6 py-4">Entregador</th>
@@ -1152,6 +1439,76 @@ export default function Admin() {
                           )}
                         </tbody>
                       </table>
+
+                      {/* Mobile View */}
+                      <div className="lg:hidden flex flex-col gap-4 p-4">
+                        {entregadores.length > 0 ? (
+                          entregadores.map((e) => (
+                            <div key={e.id} className="p-4 flex flex-col gap-3 bg-stone-900 border border-stone-800 rounded-xl shadow-md">
+                              <div className="flex items-center justify-between">
+                                <div 
+                                  className="flex items-center gap-3 cursor-pointer group"
+                                  onClick={() => setSelectedEntregador(e)}
+                                >
+                                  <div className="w-10 h-10 bg-amber-600/10 rounded-full flex justify-center items-center border border-amber-600/20 shrink-0">
+                                    <User className="w-5 h-5 text-amber-500" />
+                                  </div>
+                                  <p className="font-bold text-white text-lg leading-tight">{e.nome}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={() => {
+                                      const baseUrl = window.location.href.split('#')[0];
+                                      copyToClipboard(`${baseUrl}#/admin/entregador/${e.codigo}`);
+                                    }}
+                                    className="p-2 bg-stone-800/50 rounded-lg text-stone-400 hover:text-amber-500 transition-colors"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteEntregador(e.id)}
+                                    className="p-2 bg-red-900/20 rounded-lg text-red-500 hover:bg-red-900/40 hover:text-red-400 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div className="bg-stone-800/30 p-2 rounded-lg flex flex-col items-center justify-center border border-stone-800">
+                                  <span className="text-stone-500 text-[9px] uppercase font-bold text-center">Atribuídos</span>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <Package className="w-3 h-3 text-stone-400" />
+                                    <span className="text-white font-bold text-sm">{pedidos.filter(p => p.entregador_id === e.id).length}</span>
+                                  </div>
+                                </div>
+                                <div className="bg-stone-800/30 p-2 rounded-lg flex flex-col items-center justify-center border border-stone-800">
+                                  <span className="text-stone-500 text-[9px] uppercase font-bold text-center">Entregues</span>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <CheckCircle className="w-3 h-3 text-green-500" />
+                                    <span className="text-white font-bold text-sm">{pedidos.filter(p => p.entregador_id === e.id && p.status_retirada === 'Entregue').length}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {e.whatsapp && (
+                                <a 
+                                  href={formatWhatsApp(e.whatsapp)} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="mt-1 text-stone-400 bg-stone-800/30 border border-stone-800 p-2 rounded-lg text-sm flex items-center justify-center gap-2 hover:text-green-500 hover:border-green-900/50 transition-colors"
+                                >
+                                  <MessageCircle className="w-4 h-4" /> {e.whatsapp}
+                                </a>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-8 text-center text-stone-500 italic">
+                            Nenhum entregador cadastrado.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
