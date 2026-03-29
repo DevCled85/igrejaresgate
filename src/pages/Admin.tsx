@@ -1099,7 +1099,10 @@ export default function Admin() {
                                 <td className="px-6 py-4 text-right">
                                   <div className="flex items-center justify-end gap-2">
                                     <button 
-                                      onClick={() => copyToClipboard(`${window.location.origin}/admin/entregador/${e.codigo}`)}
+                                      onClick={() => {
+                                        const baseUrl = window.location.href.split('#')[0];
+                                        copyToClipboard(`${baseUrl}#/admin/entregador/${e.codigo}`);
+                                      }}
                                       className="p-2 text-stone-500 hover:text-amber-500 transition-colors"
                                       title="Copiar link do entregador"
                                     >
@@ -1506,10 +1509,13 @@ export default function Admin() {
                     </div>
                     <div className="mt-3 flex items-center gap-2 p-2 bg-stone-800/50 rounded border border-stone-700/50">
                       <p className="text-[10px] text-stone-400 font-mono truncate flex-1">
-                        {`${window.location.origin}/admin/entregador/${selectedEntregador.codigo}`}
+                        {`${window.location.href.split('#')[0]}#/admin/entregador/${selectedEntregador.codigo}`}
                       </p>
                       <button 
-                        onClick={() => copyToClipboard(`${window.location.origin}/admin/entregador/${selectedEntregador.codigo}`)}
+                        onClick={() => {
+                          const baseUrl = window.location.href.split('#')[0];
+                          copyToClipboard(`${baseUrl}#/admin/entregador/${selectedEntregador.codigo}`);
+                        }}
                         className="p-1.5 text-amber-500 hover:bg-amber-500/10 rounded transition-all"
                         title="Copiar link"
                       >
