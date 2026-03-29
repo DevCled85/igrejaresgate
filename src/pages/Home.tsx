@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { mockService, type Pedido, type Configuracoes } from '../lib/supabase';
 import { formatCurrency, cn, generatePixPayload, copyToClipboard } from '../lib/utils';
-import { Fish, MapPin, Truck, Wallet, QrCode, Loader2, CheckCircle2, Copy, X, Download, Calendar, Camera, Image as ImageIcon, ShieldCheck } from 'lucide-react';
+import { Fish, MapPin, Truck, Wallet, QrCode, Loader2, CheckCircle2, Copy, X, Download, Calendar, Camera, Image as ImageIcon, ShieldCheck, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
@@ -80,7 +80,7 @@ export default function Home() {
         const updated = pedidos.find(p => p.id === foundVoucher.id);
         if (updated && updated.status_retirada === 'Entregue') {
           setFoundVoucher(updated);
-          setToast({ message: 'Seu pedido foi entregue!', type: 'success' });
+          setToast({ message: 'Entrega confirmada!', type: 'success' });
         }
       } catch (err) {
         console.error('Erro ao poll status do voucher:', err);
@@ -175,7 +175,6 @@ export default function Home() {
     if (!voucherRef.current || !foundVoucher) return;
     setDownloading(true);
     
-    // Pequeno atraso para garantir que qualquer animação de entrada já tenha se estabilizado
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
@@ -195,8 +194,8 @@ export default function Home() {
           transform: 'none',
           animation: 'none',
           transition: 'none',
-          boxShadow: 'none', // Remove sombra externa para um corte limpo
-          border: 'none'    // Remove borda externa de debug se houver
+          boxShadow: 'none',
+          border: 'none'
         }
       });
 
@@ -257,11 +256,14 @@ export default function Home() {
   }
 
   const handleCopyPix = async () => {
-    if (!lastOrder) return;
+    // Determine which order to use based on which view is open
+    const pedido = activeTab === 'voucher' && foundVoucher ? foundVoucher : lastOrder;
+    if (!pedido) return;
+    
     const payload = generatePixPayload(
       config?.chave_pix || '', 
-      (config?.valor || 50) * lastOrder.quantidade, 
-      lastOrder.numero_pedido.replace('#', 'PD')
+      (config?.valor || 50) * pedido.quantidade, 
+      pedido.numero_pedido.replace('#', 'PD')
     );
     const success = await copyToClipboard(payload);
     if (success) {
@@ -383,7 +385,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Modals Container */}
       <AnimatePresence>
         {activeTab && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -400,7 +401,7 @@ export default function Home() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto no-scrollbar scroll-smooth"
+              className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto no-scrollbar"
             >
               <div className="wood-card p-6 border-amber-500/20 shadow-2xl relative">
                 <button 
@@ -502,147 +503,115 @@ export default function Home() {
                     ) : (
                       <div className="text-center">
                         {foundVoucher.status_pagamento === 'Pago' ? (
-                          <div>
-                            <div ref={voucherRef} className="bg-white rounded-2xl p-6 text-espresso shadow-2xl mb-6 relative overflow-hidden border-4 border-amber-500/10">
+                          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div ref={voucherRef} className="bg-white rounded-3xl p-8 text-espresso shadow-2xl mb-6 relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-full h-2 bg-amber-500" />
-                               <div className="flex justify-between items-end mb-6">
-                                <div className="text-left">
-                                  <p className="text-[10px] uppercase font-black text-stone-400">Voucher Oficial</p>
-                                  <p className="text-3xl font-black font-mono text-amber-600 leading-none">{foundVoucher.voucher}</p>
+                              <div className="flex justify-between items-start mb-8 text-left">
+                                <div>
+                                  <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Voucher Oficial</p>
+                                  <h3 className="text-3xl font-black text-amber-600 font-serif tracking-tighter uppercase leading-none">{foundVoucher.voucher}</h3>
                                 </div>
-                               <div className="flex flex-col items-center justify-center bg-green-50/80 px-4 py-3 rounded-2xl border border-green-200/50 shadow-sm backdrop-blur-sm">
-                                 <ShieldCheck className="w-7 h-7 text-green-600 drop-shadow-sm" />
-                                 <span className="text-[8px] font-black text-green-700 uppercase tracking-wider mt-1.5">Pagamento Confirmado</span>
-                               </div>
-                              </div>
-                              <div className="space-y-4 text-left border-y border-stone-100 py-4 mb-6">
-                                <div><p className="text-[10px] uppercase font-black text-stone-400">Portador</p><p className="font-black text-lg truncate uppercase">{foundVoucher.nome}</p></div>
-                                <div className="flex justify-between">
-                                  <div><p className="text-[10px] uppercase font-black text-stone-400">Pedido</p><p className="font-black">{foundVoucher.numero_pedido}</p></div>
-                                  <div><p className="text-[10px] uppercase font-black text-stone-400">Quantidade</p><p className="font-black">{foundVoucher.quantidade}x</p></div>
+                                <div className="flex flex-col items-center gap-1 bg-green-50 border border-green-100 p-3 rounded-2xl shadow-sm">
+                                  <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/20">
+                                    <CheckCircle2 className="w-4 h-4 text-white" />
+                                  </div>
+                                  <span className="text-[7px] font-black text-green-700 uppercase tracking-widest text-center whitespace-nowrap">Pagamento Confirmado</span>
                                 </div>
                               </div>
-                              <div className="flex flex-col items-center justify-center relative min-h-[140px]">
+
+                              <div className="space-y-5 text-left border-y border-stone-100 py-6 mb-8">
+                                <div className="grid grid-cols-1 gap-5">
+                                  <div>
+                                    <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Portador</p>
+                                    <p className="font-black text-xl truncate uppercase text-stone-900 leading-tight">{foundVoucher.nome}</p>
+                                  </div>
+                                  <div className="flex justify-between border-t border-stone-50 pt-5">
+                                    <div>
+                                      <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Pedido</p>
+                                      <p className="font-black text-stone-900 text-lg">#{foundVoucher.numero_pedido.replace('#', '')}</p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Quantidade</p>
+                                      <p className="font-black text-stone-900 text-lg">{foundVoucher.quantidade}x</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col items-center justify-center relative py-2 min-h-[180px]">
                                 {foundVoucher.status_retirada === 'Entregue' ? (
-                                  <>
-                                    <div className="flex flex-col items-center gap-2 opacity-20 grayscale">
-                                      <QRCodeSVG value={foundVoucher.voucher || ''} size={100} />
-                                      <p className="text-[9px] font-black uppercase tracking-widest text-espresso/60">Apresentar na Retirada</p>
+                                  <div className="relative w-full flex flex-col items-center justify-center">
+                                    <div className="flex flex-col items-center gap-3 opacity-10 grayscale scale-95 transition-all duration-1000">
+                                      <QRCodeSVG value={foundVoucher.voucher || ''} size={150} />
+                                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Apresentar na Retirada</p>
                                     </div>
                                     <div className="stamp-seal animate-stamp">
                                       <div className="stamp-inner">
                                         <span className="stamp-text">Entregue</span>
                                       </div>
                                     </div>
-                                  </>
-                                ) : (
-                                  <div className="flex flex-col items-center gap-2">
-                                     <QRCodeSVG value={foundVoucher.voucher || ''} size={100} />
-                                     <p className="text-[9px] font-black uppercase tracking-widest text-espresso/60">Apresentar na Retirada</p>
                                   </div>
+                                ) : (
+                                  <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-3">
+                                    <QRCodeSVG value={foundVoucher.voucher || ''} size={150} />
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Apresentar na Retirada</p>
+                                  </motion.div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex flex-col gap-3">
-                              <button onClick={downloadVoucher} disabled={downloading} className="gold-button w-full flex items-center justify-center gap-2">{downloading ? <Loader2 className="animate-spin w-5 h-5" /> : <><Download className="w-5 h-5" /> Baixar Imagem</>}</button>
-                              <button onClick={() => setFoundVoucher(null)} className="w-full py-3 text-stone-500 font-bold uppercase text-xs tracking-widest">Nova Busca</button>
+                            <div className="space-y-4">
+                              <button onClick={downloadVoucher} disabled={downloading} className="w-full py-5 bg-amber-600 rounded-2xl text-white font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 shadow-xl shadow-amber-950/40 hover:bg-amber-500 transition-all">
+                                {downloading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Download className="w-5 h-5" /> Baixar Imagem</>}
+                              </button>
+                              <button onClick={() => setFoundVoucher(null)} className="w-full py-2 text-stone-500 font-bold uppercase tracking-[0.3em] text-[10px] hover:text-white transition-colors">Nova Busca</button>
                             </div>
                           </div>
                         ) : (
-                          <div className="space-y-6">
-                            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto border border-amber-500/20"><QrCode className="w-8 h-8 text-amber-500" /></div>
-                            <div><h3 className="text-xl font-bold text-white uppercase tracking-tight">Pagamento Pendente</h3><p className="text-amber-500 font-black text-2xl mt-1">{foundVoucher.numero_pedido}</p></div>
-                            
-                            <div className="space-y-4">
-                              <div className="bg-white rounded-2xl p-4 border border-amber-500/20 flex flex-col items-center gap-4">
-                                <div className="bg-white p-2">
-                                  <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'))} size={150} />
+                          <div className="animate-in fade-in zoom-in duration-500 py-4">
+                            <div className="flex flex-col items-center mb-8">
+                               <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 mb-6">
+                                 <QrCode className="w-8 h-8 text-amber-500" />
+                               </div>
+                               <h2 className="text-2xl font-black text-white font-serif tracking-tight uppercase mb-1">Pagamento Pendente</h2>
+                               <p className="text-amber-500 font-black text-3xl">#{foundVoucher.numero_pedido.replace('#', '')}</p>
+                            </div>
+                            <div className="bg-white rounded-3xl p-6 mb-6 shadow-2xl space-y-6">
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="bg-white p-2 border border-stone-100 rounded-xl">
+                                  <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'))} size={160} />
                                 </div>
-                                <div 
-                                  onClick={async () => {
-                                    const payload = generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'));
-                                    const success = await copyToClipboard(payload);
-                                    if (success) {
-                                      setToast({ message: 'Código PIX copiado!', type: 'success' });
-                                      setCopied(true);
-                                      setTimeout(() => setCopied(false), 2000);
-                                    }
-                                  }}
-                                  className={cn(
-                                    "w-full p-3 rounded-xl border text-left cursor-pointer transition-all",
-                                    copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100"
-                                  )}
-                                >
-                                  <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Copia e Cola</p>
-                                  <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
+                                <div className="w-full bg-stone-50 rounded-2xl p-4 border border-stone-100 text-left cursor-pointer hover:bg-stone-100 transition-colors" onClick={handleCopyPix}>
+                                  <p className="text-[10px] uppercase font-black text-stone-400 mb-1">Copia e Cola</p>
+                                  <p className="text-[8px] font-mono break-all leading-tight text-stone-500">
                                     {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'))}
                                   </p>
                                 </div>
-                                <button onClick={() => { 
-                                  const payload = generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'));
-                                  navigator.clipboard.writeText(payload);
-                                  setToast({ message: 'Código PIX copiado!', type: 'success' });
-                                  setCopied(true);
-                                  setTimeout(() => setCopied(false), 2000);
-                                }} className={cn(
-                                  "text-xs font-bold uppercase flex items-center gap-2 px-6 py-3 rounded-xl border transition-all w-full justify-center underline-offset-4",
-                                  copied 
-                                    ? "bg-green-500/10 border-green-500/50 text-green-600" 
-                                    : "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20"
-                                )}>
-                                  {copied ? (
-                                    <><CheckCircle2 className="w-3 h-3" /> Copiado!</>
-                                  ) : (
-                                    <><Copy className="w-3 h-3" /> Copiar Código PIX</>
-                                  )}
+                                <button onClick={handleCopyPix} className="w-full py-4 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all">
+                                  <Copy className="w-4 h-4" /> Copiar Código PIX
                                 </button>
                               </div>
-
+                            </div>
+                            <div className="space-y-3">
                               {!foundVoucher.comprovante_url ? (
-                                <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
-                                  <input 
-                                    type="file" 
-                                    ref={fileInputRef}
-                                    accept="image/*" 
-                                    onChange={(e) => handleUploadReceipt(e, 'found')}
-                                    className="hidden" 
-                                  />
-                                  <button 
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={uploadingReceipt}
-                                    className="w-full flex flex-col items-center gap-3"
-                                  >
-                                    {uploadingReceipt ? (
-                                      <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                                    ) : (
-                                      <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <Camera className="w-6 h-6 text-amber-500" />
-                                      </div>
-                                    )}
-                                    <div className="text-center">
-                                      <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
-                                      <p className="text-stone-500 text-[10px] mt-1 font-medium italic">Obrigatório para confirmar seu pedido PIX</p>
-                                    </div>
+                                <div className="bg-green-500/5 p-4 rounded-3xl border border-green-500/20 flex flex-col items-center gap-4">
+                                  <input type="file" ref={fileInputRef} accept="image/*" onChange={(e) => handleUploadReceipt(e, 'found')} className="hidden" />
+                                  <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full py-4 bg-green-950/20 hover:bg-green-950/40 text-green-500 border border-green-500/30 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all">
+                                    {uploadingReceipt ? <Loader2 className="animate-spin w-5 h-5" /> : <><CheckCircle2 className="w-5 h-5" /> Comprovante Já Enviado!</>}
                                   </button>
                                 </div>
                               ) : (
                                 <div className="space-y-3">
-                                  <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/30 flex items-center justify-center gap-3">
+                                  <div className="bg-green-500/10 p-4 rounded-3xl border border-green-500/30 flex items-center justify-center gap-3">
                                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                    <span className="text-green-500 font-bold text-xs uppercase tracking-wider">Comprovante já enviado!</span>
+                                    <span className="text-green-500 font-bold text-[10px] uppercase tracking-widest">Comprovante já enviado!</span>
                                   </div>
-                                  <a 
-                                    href={foundVoucher.comprovante_url} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="w-full flex items-center justify-center gap-2 bg-stone-800 hover:bg-stone-700 text-white py-3 rounded-xl border border-white/5 text-xs font-bold transition-all"
-                                  >
+                                  <a href={foundVoucher.comprovante_url} target="_blank" rel="noreferrer" className="w-full py-4 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-2xl border border-white/5 font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all">
                                     <ImageIcon className="w-4 h-4 text-amber-500" /> Ver Comprovante Enviado
                                   </a>
                                 </div>
                               )}
+                              <button onClick={() => setFoundVoucher(null)} className="w-full py-5 bg-amber-600 rounded-2xl text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-amber-950/40 hover:bg-amber-500 transition-all mt-4">Voltar</button>
                             </div>
-                            <button onClick={() => setFoundVoucher(null)} className="gold-button w-full h-14 text-lg">Voltar</button>
                           </div>
                         )}
                       </div>
@@ -664,76 +633,36 @@ export default function Home() {
               <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
               
               <div className="space-y-6 mb-8">
-                {/* QR Code Section (Universal for Scanner) */}
                 <div className="bg-white rounded-2xl p-6 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden min-h-[220px] justify-center shadow-inner">
                   <div ref={qrRef} className={cn("bg-white p-2 transition-all duration-700", lastOrder.status_retirada === 'Entregue' ? "opacity-20 grayscale scale-95" : "opacity-100")}>
                     <QRCodeSVG value={lastOrder.voucher || lastOrder.numero_pedido} size={150} />
                   </div>
-                  <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] transition-colors", lastOrder.status_retirada === 'Entregue' ? "text-stone-300" : "text-espresso/60")}>
-                    Apresentar na Retirada
-                  </p>
-                  
-                  {/* Concluded Seal Overlay */}
+                  <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] transition-colors", lastOrder.status_retirada === 'Entregue' ? "text-stone-300" : "text-espresso/60")}>Apresentar na Retirada</p>
                   {lastOrder.status_retirada === 'Entregue' && (
                     <div className="stamp-seal animate-stamp">
-                      <div className="stamp-inner">
-                        <span className="stamp-text">Entregue</span>
-                      </div>
+                      <div className="stamp-inner"><span className="stamp-text">Entregue</span></div>
                     </div>
                   )}
                 </div>
 
                 {lastOrder.pagamento === 'PIX' && (
                   <div className="space-y-4">
-                    <div 
-                      onClick={handleCopyPix}
-                      className={cn(
-                        "w-full p-4 rounded-2xl border text-left cursor-pointer transition-all",
-                        copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100"
-                      )}
-                    >
+                    <div onClick={handleCopyPix} className={cn("w-full p-4 rounded-2xl border text-left cursor-pointer transition-all", copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100")}>
                       <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Pagar via PIX (Copia e Cola)</p>
                       <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
                         {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
                       </p>
                     </div>
-
                     <div className="flex gap-2 w-full">
-                      <button onClick={handleCopyPix} className={cn(
-                        "flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all",
-                        copied 
-                          ? "bg-green-500/10 border-green-500/50 text-green-600" 
-                          : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30"
-                      )}>
-                        {copied ? (
-                          <><CheckCircle2 className="w-4 h-4" /> Copiado!</>
-                        ) : (
-                          <><Copy className="w-4 h-4" /> Copiar Código</>
-                        )}
+                      <button onClick={handleCopyPix} className={cn("flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all", copied ? "bg-green-500/10 border-green-500/50 text-green-600" : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30")}>
+                        {copied ? <><CheckCircle2 className="w-4 h-4" /> Copiado!</> : <><Copy className="w-4 h-4" /> Copiar Código</>}
                       </button>
                     </div>
-                    
                     {!lastOrder.comprovante_url ? (
                       <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
-                        <input 
-                          type="file" 
-                          ref={fileInputRef}
-                          accept="image/*" 
-                          onChange={handleUploadReceipt}
-                          className="hidden" 
-                        />
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingReceipt}
-                          className="w-full flex flex-col items-center gap-3"
-                        >
-                          {uploadingReceipt ? (
-                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                          ) : (
-                            <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Camera className="w-6 h-6 text-amber-500" />
-                            </div>
-                          )}
+                        <input type="file" ref={fileInputRef} accept="image/*" onChange={handleUploadReceipt} className="hidden" />
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex flex-col items-center gap-3">
+                          {uploadingReceipt ? <Loader2 className="w-8 h-8 text-amber-500 animate-spin" /> : <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Camera className="w-6 h-6 text-amber-500" /></div>}
                           <div className="text-center">
                             <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
                             <p className="text-stone-500 text-[10px] mt-1 font-medium italic text-center">Obrigatório para confirmar seu pedido PIX</p>
@@ -762,17 +691,9 @@ export default function Home() {
         </p>
       </footer>
 
-      {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
-          <motion.div 
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border backdrop-blur-md ${
-              toast.type === 'success' ? 'bg-green-600/90 border-green-500/50 text-white' : 'bg-red-600/90 border-red-500/50 text-white'
-            }`}
-          >
+          <motion.div initial={{ opacity: 0, y: 50, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border backdrop-blur-md ${toast.type === 'success' ? 'bg-green-600/90 border-green-500/50 text-white' : 'bg-red-600/90 border-red-500/50 text-white'}`}>
             {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <X className="w-5 h-5" />}
             <span className="font-bold text-sm tracking-tight">{toast.message}</span>
           </motion.div>
