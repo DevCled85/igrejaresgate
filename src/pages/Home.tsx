@@ -648,53 +648,57 @@ export default function Home() {
       <AnimatePresence>
         {orderSuccess && lastOrder && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
-          <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="wood-card w-full max-w-sm p-8 text-center border-green-500/30 max-h-[95vh] overflow-y-auto no-scrollbar">
-              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-900/40"><CheckCircle2 className="w-12 h-12 text-white" /></div>
-              <h2 className="text-2xl font-black text-white mb-2 font-serif uppercase tracking-tight">Pedido Recebido!</h2>
-              <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
+          <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="wood-card w-full max-w-sm p-4 text-center border-green-500/30 max-h-[96vh] overflow-y-auto no-scrollbar">
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/40 mb-2"><CheckCircle2 className="w-8 h-8 text-white" /></div>
+                <h2 className="text-lg font-black text-white font-serif uppercase tracking-tight">Pedido Recebido!</h2>
+                <p className="text-amber-500 font-black text-xl leading-none">{lastOrder.numero_pedido}</p>
+              </div>
               
-              <div className="space-y-6 mb-8">
+              <div className="space-y-3 mb-4">
                 {lastOrder.pagamento === 'PIX' && (
-                  <div className="space-y-4">
-                    <div className="bg-white rounded-2xl p-4 border border-amber-500/20 flex flex-col items-center gap-2 relative overflow-hidden shadow-inner">
-                      <div ref={qrRef} className="bg-white p-1">
-                        <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))} size={130} />
-                      </div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Escaneie para Pagar</p>
+                  <div className="bg-white rounded-2xl p-3 flex flex-col items-center gap-3 overflow-hidden shadow-inner">
+                    {/* Integrated PIX Area (Similar to User Image) */}
+                    <div ref={qrRef} className="bg-white p-1">
+                      <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))} size={120} />
                     </div>
 
-                    <div onClick={handleCopyPix} className={cn("w-full p-4 rounded-2xl border text-left cursor-pointer transition-all", copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100")}>
-                      <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Pagar via PIX (Copia e Cola)</p>
-                      <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
+                    <div onClick={handleCopyPix} className="w-full p-2 bg-stone-50 rounded-xl border border-stone-100 text-left cursor-pointer transition-all hover:bg-stone-100">
+                      <p className="text-[8px] uppercase font-black text-stone-400 mb-0.5">Copia e Cola</p>
+                      <p className="text-[7px] font-mono break-all leading-tight text-stone-500">
                         {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
                       </p>
                     </div>
-                    <div className="flex gap-2 w-full">
-                      <button onClick={handleCopyPix} className={cn("flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all", copied ? "bg-green-500/10 border-green-500/50 text-green-600" : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30")}>
-                        {copied ? <><CheckCircle2 className="w-4 h-4" /> Copiado!</> : <><Copy className="w-4 h-4" /> Copiar Código</>}
-                      </button>
-                    </div>
+
+                    <button onClick={handleCopyPix} className={cn("w-full py-3 h-11 rounded-xl border font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-all", copied ? "bg-green-500/10 border-green-500/50 text-green-600" : "bg-amber-500/5 text-amber-600 border-amber-500/20 hover:bg-amber-500/10")}>
+                      {copied ? <><CheckCircle2 className="w-3 h-3" /> Copiado!</> : <><Copy className="w-3 h-3" /> Copiar Código PIX</>}
+                    </button>
+                  </div>
+                )}
+
+                {lastOrder.pagamento === 'PIX' && (
+                  <div className="space-y-3">
                     {!lastOrder.comprovante_url ? (
-                      <div className="bg-stone-900/50 p-4 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
+                      <div className="bg-stone-900/40 p-2.5 rounded-xl border border-dashed border-white/5 group hover:border-amber-500/30 transition-colors">
                         <input type="file" ref={fileInputRef} accept="image/*" onChange={handleUploadReceipt} className="hidden" />
-                        <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex flex-row items-center justify-center gap-4">
-                          {uploadingReceipt ? <Loader2 className="w-6 h-6 text-amber-500 animate-spin" /> : <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0"><Camera className="w-5 h-5 text-amber-500" /></div>}
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex items-center justify-center gap-3">
+                          {uploadingReceipt ? <Loader2 className="w-5 h-5 text-amber-500 animate-spin" /> : <div className="w-8 h-8 bg-amber-500/10 rounded-full flex items-center justify-center flex-shrink-0"><Camera className="w-4 h-4 text-amber-500" /></div>}
                           <div className="text-left">
-                            <p className="text-white font-bold text-xs tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
-                            <p className="text-stone-500 text-[8px] font-medium italic">Obrigatório para confirmar pedido</p>
+                            <p className="text-white font-bold text-[10px] tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
+                            <p className="text-stone-500 text-[7px] font-medium leading-none">Obrigatório para confirmar</p>
                           </div>
                         </button>
                       </div>
                     ) : (
-                      <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/30 flex items-center justify-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="text-green-500 font-bold text-xs uppercase tracking-wider">Comprovante Enviado!</span>
+                      <div className="bg-green-500/5 p-2 rounded-xl border border-green-500/20 flex items-center justify-center gap-2">
+                        <CheckCircle2 className="w-3 h-3 text-green-500" />
+                        <span className="text-green-500 font-bold text-[8px] uppercase tracking-wider">Comprovante Enviado!</span>
                       </div>
                     )}
                   </div>
                 )}
               </div>
-              <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-14 text-lg">Entendido</button>
+              <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-12 text-sm uppercase font-black">Entendido</button>
             </motion.div>
           </motion.div>
         )}
