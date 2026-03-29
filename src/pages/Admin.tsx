@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockService, type Pedido, type Configuracoes, type Entregador, type Notificacao, type AdminPerfil } from '../lib/supabase';
+import { mockService, type Pedido, type Configuracoes, type Entregador, type Notificacao, type AdminPerfil, type AuditoriaLog } from '../lib/supabase';
 import { formatCurrency, formatWhatsApp, formatMapsUrl, cn } from '../lib/utils';
 import { 
   Bell,
@@ -8,6 +8,8 @@ import {
   Settings, 
   ListOrdered, 
   LogOut, 
+  BarChart,
+  ShieldCheck,
   Save, 
   Trash2, 
   CheckCircle, 
@@ -41,7 +43,9 @@ import { Html5Qrcode } from 'html5-qrcode';
 import logoImg from '../images/Favicon_final.png';
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'orders' | 'drivers'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'orders' | 'drivers' | 'reports' | 'audit'>('dashboard');
+  const [auditoriaLogs, setAuditoriaLogs] = useState<AuditoriaLog[]>([]);
+  const [selectedAudit, setSelectedAudit] = useState<AuditoriaLog | null>(null);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [entregadores, setEntregadores] = useState<Entregador[]>([]);
   const [config, setConfig] = useState<Configuracoes | null>(null);
@@ -155,12 +159,13 @@ export default function Admin() {
   async function fetchData(silent = false) {
     if (!silent) setLoading(true);
     try {
-      const [configData, pedidosData, entregadoresData, rawNotifs, perfisData] = await Promise.all([
+      const [configData, pedidosData, entregadoresData, rawNotifs, perfisData, auditoriaData] = await Promise.all([
         mockService.getConfig(),
         mockService.getPedidos(),
         mockService.getEntregadores(),
         mockService.getNotificacoes(),
-        mockService.getAdminPerfis()
+        mockService.getAdminPerfis(),
+        mockService.getAuditoria()
       ]);
       
       const notifsData = rawNotifs.filter(n => n.publico === 'admin' || n.publico === 'todos');
@@ -178,6 +183,7 @@ export default function Admin() {
         return dateB - dateA;
       }));
       setNotificacoes(notifsData);
+      setAuditoriaLogs(auditoriaData);
 
       const unread = notifsData.filter(n => !n.lida);
       if (silent && unread.length > 0) {
@@ -484,6 +490,26 @@ export default function Admin() {
             <Settings className="w-5 h-5" />
             <span className="font-medium">Configurações</span>
           </button>
+          
+          <div className="pt-4 mt-4 border-t border-espresso-border">
+            <button 
+              onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${activeTab === 'reports' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-stone-400 hover:bg-stone-800'}`}
+            >
+              <div className="flex items-center gap-3">
+                <BarChart className="w-5 h-5" />
+                <span className="font-medium">Relatórios</span>
+              </div>
+              <span className="text-[9px] uppercase tracking-wider bg-stone-800 text-stone-300 px-2 py-1 rounded-md ml-2 font-bold whitespace-nowrap">Em breve</span>
+            </button>
+            <button 
+              onClick={() => { setActiveTab('audit'); setIsMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 mt-2 rounded-lg transition-all ${activeTab === 'audit' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' : 'text-stone-400 hover:bg-stone-800'}`}
+            >
+              <ShieldCheck className="w-5 h-5" />
+              <span className="font-medium">Auditoria</span>
+            </button>
+          </div>
         </nav>
 
         <button 
@@ -499,11 +525,16 @@ export default function Admin() {
       <main className="flex-1 p-6 md:p-10 overflow-auto bg-[radial-gradient(circle_at_top_right,#1a1210,transparent_50%)]">
         <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 pb-6 border-b border-white/5 relative z-50">
           <div>
-            <h1 className="text-3xl font-black text-white font-serif mb-1 capitalize">
+            <h1 className="text-3xl font-black text-white font-serif mb-1 capitalize flex items-center gap-3">
               {activeTab === 'dashboard' && 'Visão Geral'}
               {activeTab === 'orders' && 'Lista de Pedidos'}
               {activeTab === 'drivers' && 'Gestão de Entregadores'}
               {activeTab === 'config' && 'Configurações'}
+              {activeTab === 'reports' && 'Relatórios do Sistema'}
+              {activeTab === 'audit' && 'Auditoria e Logs'}
+              {activeTab === 'reports' && (
+                <span className="text-xs uppercase tracking-wider bg-amber-600/20 border border-amber-600/50 text-amber-500 px-3 py-1.5 rounded-full ml-2 font-sans font-bold whitespace-nowrap">Em breve</span>
+              )}
             </h1>
             <p className="text-stone-500 text-xs uppercase tracking-widest font-bold">Gerenciamento Tambaqui Igreja Resgate</p>
           </div>
@@ -1697,6 +1728,140 @@ export default function Admin() {
                     </button>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'reports' && (
+              <motion.div 
+                key="reports"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center justify-center min-h-[50vh]"
+              >
+                <div className="wood-card w-full max-w-md p-10 text-center flex flex-col items-center">
+                  <BarChart className="w-16 h-16 text-amber-600/50 mb-6" />
+                  <h2 className="text-2xl font-bold text-white font-serif mb-2">Painel de Relatórios</h2>
+                  <p className="text-stone-400 mb-8">Esta funcionalidade está sendo cuidadosamente lapidada. Em breve, você terá acesso a métricas completas e de forma analítica!</p>
+                  <span className="px-6 py-2 bg-amber-600/10 border border-amber-600/30 text-amber-500 rounded-full font-bold uppercase tracking-wider text-sm shadow-[0_0_15px_rgba(217,119,6,0.2)]">
+                    Em Breve
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'audit' && (
+              <motion.div 
+                key="audit"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                {/* Audit Content View */}
+                <div className="wood-card p-6 min-h-[50vh]">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                      <h2 className="text-xl font-bold text-white font-serif flex items-center gap-2">
+                        <ShieldCheck className="w-6 h-6 text-amber-500" />
+                        Log Histórico e Auditoria Administrativa
+                      </h2>
+                      <p className="text-sm text-stone-400 mt-1">Registros imutáveis de todas as alterações feitas no sistema.</p>
+                    </div>
+                    <div className="px-4 py-2 bg-amber-900/10 border border-amber-900/30 rounded-lg">
+                      <p className="text-amber-500 text-xs font-bold uppercase tracking-wider">{auditoriaLogs.length} Registros</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-stone-800 before:to-transparent">
+                    {auditoriaLogs.length > 0 ? auditoriaLogs.map((log, index) => (
+                      <div key={log.id || index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-espresso bg-stone-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ml-0 md:ml-0 z-10 transition-transform group-hover:scale-110">
+                          <CheckCircle className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div 
+                          onClick={() => setSelectedAudit(log)}
+                          className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-stone-800 bg-stone-900/30 shadow-md transition-all hover:bg-stone-800/80 hover:border-amber-900/50 cursor-pointer ml-4 md:ml-0"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                            <span className="font-bold text-amber-500 text-sm uppercase tracking-wider">{log.acao}</span>
+                            <span className="flex items-center gap-1 font-mono text-[10px] text-stone-400 bg-black/40 px-2 py-0.5 rounded">
+                              <Clock className="w-3 h-3" /> {new Date(log.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-stone-300 text-sm leading-relaxed mb-3 line-clamp-2">{log.detalhes}</p>
+                          <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium border-t border-stone-800/50 pt-2">
+                            <User className="w-3 h-3 text-stone-500" /> Autor: <span className="text-stone-300">{log.usuario}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="text-center py-20 relative z-10">
+                        <ShieldCheck className="w-16 h-16 text-stone-700 mx-auto mb-4" />
+                        <p className="text-stone-400 font-medium">Nenhum evento registrado ainda.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Audit Modal */}
+                <AnimatePresence>
+                  {selectedAudit && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="wood-card w-full max-w-lg p-8 relative flex flex-col"
+                      >
+                        <button 
+                          onClick={() => setSelectedAudit(null)}
+                          className="absolute top-4 right-4 text-stone-500 hover:text-white transition-colors"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-6 border-b border-stone-800 pb-4 pr-10">
+                          <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0" />
+                          <div>
+                            <h2 className="text-xl font-bold text-white font-serif tracking-wide">{selectedAudit.acao}</h2>
+                            <p className="text-xs text-stone-500 font-mono tracking-widest uppercase">ID: {selectedAudit.id}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-6">
+                          <div className="bg-stone-900/50 p-4 rounded-xl border border-stone-800/50">
+                            <h3 className="text-[10px] uppercase text-stone-500 font-bold tracking-widest mb-2">Detalhes da Ação</h3>
+                            <div className="text-amber-100/70 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/30 p-4 rounded-lg border border-stone-800/50 shadow-inner">
+                              {selectedAudit.detalhes}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-stone-900/50 p-4 rounded-xl border border-stone-800/50">
+                              <h3 className="text-[10px] uppercase text-stone-500 font-bold tracking-widest mb-2 flex items-center gap-1"><User className="w-3 h-3"/> Autor</h3>
+                              <p className="text-amber-500 font-bold">{selectedAudit.usuario}</p>
+                            </div>
+                            <div className="bg-stone-900/50 p-4 rounded-xl border border-stone-800/50">
+                              <h3 className="text-[10px] uppercase text-stone-500 font-bold tracking-widest mb-2 flex items-center gap-1"><Clock className="w-3 h-3"/> Data / Hora</h3>
+                              <p className="text-white font-mono text-xs mt-1">
+                                {new Date(selectedAudit.created_at).toLocaleDateString('pt-BR')} <br/>
+                                <span className="text-stone-400">{new Date(selectedAudit.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={() => setSelectedAudit(null)}
+                          className="mt-8 w-full py-3 bg-stone-800 text-white font-bold rounded-xl hover:bg-stone-700 transition-all border border-stone-700 text-sm uppercase tracking-wider"
+                        >
+                          Fechar Detalhes
+                        </button>
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
         </AnimatePresence>

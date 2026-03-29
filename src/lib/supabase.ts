@@ -58,9 +58,40 @@ export type Notificacao = {
   publico: 'admin' | 'entregador' | 'todos';
 };
 
+export type AuditoriaLog = {
+  id: string;
+  usuario: string;
+  acao: string;
+  detalhes: string;
+  created_at: string;
+};
+
 // ─── SUPABASE SERVICE ─────────────────────────────────────────────────────────
 
 export const supabaseService = {
+  // ─── AUDITORIA ──────────────────────────────────────────────
+  getAuditoria: async (): Promise<AuditoriaLog[]> => {
+    const { data, error } = await supabase
+      .from('auditoria')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) {
+      console.error('Erro na auditoria:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  addAuditoria: async (acao: string, detalhes: string): Promise<void> => {
+    const usuario = localStorage.getItem('admin_user') || 'Sistema';
+    await supabase.from('auditoria').insert({
+      usuario,
+      acao,
+      detalhes
+    });
+  },
+
   // ─── CONFIGURATION ────────────────────────────────────────
   getConfig: async (): Promise<Configuracoes> => {
     const { data, error } = await supabase
@@ -91,6 +122,7 @@ export const supabaseService = {
       .update({ usuario: perfil.usuario, senha: perfil.senha })
       .eq('id', perfil.id);
     if (error) throw error;
+    await supabaseService.addAuditoria('Edição de Acesso', `Administrador '${perfil.usuario}' foi editado.`);
   },
 
   addAdminPerfil: async (usuario: string, senha: string): Promise<void> => {
@@ -98,6 +130,7 @@ export const supabaseService = {
       .from('admin_perfil')
       .insert({ usuario, senha });
     if (error) throw error;
+    await supabaseService.addAuditoria('Criação de Acesso', `Novo administrador criado: '${usuario}'`);
   },
 
   deleteAdminPerfil: async (id: string): Promise<void> => {
@@ -106,6 +139,7 @@ export const supabaseService = {
       .delete()
       .eq('id', id);
     if (error) throw error;
+    await supabaseService.addAuditoria('Exclusão de Acesso', `Administrador com ID ${id} foi removido do sistema.`);
   },
 
   saveConfig: async (config: Configuracoes): Promise<void> => {
@@ -122,6 +156,7 @@ export const supabaseService = {
       })
       .eq('id', 1);
     if (error) throw error;
+    await supabaseService.addAuditoria('Configuração Alterada', `As configurações gerais do painel foram atualizadas.`);
   },
 
   // ─── ORDERS ──────────────────────────────────────────────
@@ -167,6 +202,7 @@ export const supabaseService = {
       `Novo pedido ${finalPedido.numero_pedido} de ${finalPedido.nome}!`,
       'admin'
     );
+    await supabaseService.addAuditoria('Novo Pedido', `Pedido ${finalPedido.numero_pedido} criado no valor de R$ ${(finalPedido.quantidade * 50).toFixed(2)} (${finalPedido.pagamento})`);
 
     return finalPedido;
   },
@@ -175,6 +211,17 @@ export const supabaseService = {
     id: string,
     updates: Partial<Pedido>
   ): Promise<{ data: Pedido | null; error: unknown }> => {
+    const { data: original } = await supabase.from('pedidos').select('*').eq('id', id).single();
+
+    const mods: string[] = [];
+    if (original) {
+      Object.entries(updates).forEach(([key, val]) => {
+        if (key !== 'delivered_at' && original[key as keyof Pedido] !== val) {
+          mods.push(`- ${key.toUpperCase()}: de '${original[key as keyof Pedido] || 'Vazio'}' para '${val || 'Vazio'}'`);
+        }
+      });
+    }
+
     if (updates.status_retirada === 'Entregue') {
       updates.delivered_at = new Date().toISOString();
     } else if (updates.status_retirada === 'Pendente') {
@@ -189,6 +236,11 @@ export const supabaseService = {
       .single();
 
     if (error) return { data: null, error };
+
+    if (mods.length > 0 && original) {
+      const detalhesStr = `Pedido ${original.numero_pedido} - Cliente: ${original.nome}\nAlterações feitas:\n${mods.join('\n')}`;
+      await supabaseService.addAuditoria('Atualização de Pedido', detalhesStr);
+    }
 
     if (updates.status_pagamento === 'Pago' && data) {
       await supabaseService.addNotificacao(
@@ -240,8 +292,14 @@ export const supabaseService = {
   },
 
   deletePedido: async (id: string): Promise<void> => {
+    const { data: original } = await supabase.from('pedidos').select('*').eq('id', id).single();
     const { error } = await supabase.from('pedidos').delete().eq('id', id);
     if (error) throw error;
+    
+    if (original) {
+      const det = `Referência: ${original.numero_pedido}\nCliente: ${original.nome}\nQuantia do Pedido: ${original.quantidade}\nStatus: ${original.status_pagamento}`;
+      await supabaseService.addAuditoria('Exclusão de Pedido', det);
+    }
   },
 
   // ─── DRIVERS ─────────────────────────────────────────
@@ -275,6 +333,7 @@ export const supabaseService = {
       .single();
     if (error) throw error;
     await supabaseService.reassignOrders();
+    await supabaseService.addAuditoria('Novo Entregador', `Entregador '${entregador.nome}' foi cadastrado (Código: ${codigo}).`);
     return data;
   },
 
@@ -282,6 +341,7 @@ export const supabaseService = {
     const { error } = await supabase.from('entregadores').delete().eq('id', id);
     if (error) throw error;
     await supabaseService.reassignOrders();
+    await supabaseService.addAuditoria('Exclusão de Entregador', `Entregador ID ${id} foi removido.`);
   },
 
   reassignOrders: async (): Promise<void> => {
