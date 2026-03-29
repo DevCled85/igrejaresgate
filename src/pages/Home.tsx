@@ -70,6 +70,26 @@ export default function Home() {
     }
   }, [toast]);
 
+  // Polling para atualizar o status do voucher encontrado em tempo real
+  useEffect(() => {
+    if (!foundVoucher || foundVoucher.status_retirada === 'Entregue') return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const pedidos = await mockService.getPedidos();
+        const updated = pedidos.find(p => p.id === foundVoucher.id);
+        if (updated && updated.status_retirada === 'Entregue') {
+          setFoundVoucher(updated);
+          setToast({ message: 'Seu pedido foi entregue!', type: 'success' });
+        }
+      } catch (err) {
+        console.error('Erro ao poll status do voucher:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [foundVoucher]);
+
   async function fetchData() {
     setLoading(true);
     try {
@@ -482,20 +502,19 @@ export default function Home() {
                                   <div><p className="text-[10px] uppercase font-black text-stone-400">Quantidade</p><p className="font-black">{foundVoucher.quantidade}x</p></div>
                                 </div>
                               </div>
-                              <div className="flex flex-col items-center justify-center">
+                              <div className="flex flex-col items-center justify-center relative min-h-[140px]">
                                 {foundVoucher.status_retirada === 'Entregue' ? (
-                                  <div className="flex flex-col items-center justify-center py-6 animate-in fade-in zoom-in duration-500">
-                                    <div className="w-32 h-32 rounded-full border-[6px] border-amber-500/5 flex flex-col items-center justify-center gap-1 bg-green-100/30 shadow-2xl relative overflow-hidden group">
-                                      <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-transparent" />
-                                      <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/20 z-10">
-                                        <CheckCircle2 className="w-8 h-8 text-white" />
+                                  <>
+                                    <div className="flex flex-col items-center gap-2 opacity-20 grayscale">
+                                      <QRCodeSVG value={foundVoucher.voucher || ''} size={100} />
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-espresso/60">Apresentar na Retirada</p>
+                                    </div>
+                                    <div className="stamp-seal animate-stamp">
+                                      <div className="stamp-inner">
+                                        <span className="stamp-text">Entregue</span>
                                       </div>
-                                      <span className="text-xs font-black text-green-700 uppercase tracking-widest z-10 mt-1">Entregue</span>
                                     </div>
-                                    <div className="mt-8 border-t border-stone-100 pt-4 w-full text-center">
-                                      <p className="text-[11px] font-black uppercase tracking-[0.3em] text-stone-400">Pedido já Retirado</p>
-                                    </div>
-                                  </div>
+                                  </>
                                 ) : (
                                   <div className="flex flex-col items-center gap-2">
                                      <QRCodeSVG value={foundVoucher.voucher || ''} size={100} />
