@@ -137,12 +137,8 @@ export const supabaseService = {
   addPedido: async (
     pedido: Omit<Pedido, 'id' | 'created_at' | 'numero_pedido' | 'status_retirada' | 'entregador_id'>
   ): Promise<Pedido> => {
-    const { count } = await supabase
-      .from('pedidos')
-      .select('*', { count: 'exact', head: true });
-    
-    const nextNumber = (count ?? 0) + 1;
-    const numero_pedido = `#${String(nextNumber).padStart(4, '0')}`;
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const numero_pedido = `#${code}`;
 
     const { data, error } = await supabase
       .from('pedidos')

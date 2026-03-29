@@ -152,6 +152,26 @@ export default function Home() {
     setVendidos(total);
   }
 
+  const handleFinalizeOrder = () => {
+    if (!lastOrder) return;
+    
+    const message = `*✅ SEU PEDIDO FOI RECEBIDO!*\n\n` +
+      `*Número do Pedido:* ${lastOrder.numero_pedido}\n` +
+      `*Nome:* ${lastOrder.nome}\n` +
+      `*Quantidade:* ${lastOrder.quantidade}x Tambaqui\n` +
+      `*Retirada/Entrega:* ${lastOrder.tipo_entrega}\n` +
+      `${lastOrder.tipo_entrega === 'Entrega' && lastOrder.endereco ? `*Endereço:* ${lastOrder.endereco}\n` : ''}` +
+      `*Pagamento:* ${lastOrder.pagamento}\n` +
+      `*Total:* ${formatCurrency((config?.valor || 50) * lastOrder.quantidade)}\n\n` +
+      `Agradecemos a sua preferência! Para acompanhar seu pedido, digite seu nome ou número do pedido na Área de Busca do nosso site.`;
+      
+    const whatsappClean = lastOrder.whatsapp.replace(/\D/g, '');
+    const encodedMessage = encodeURIComponent(message);
+    
+    setOrderSuccess(false);
+    window.open(`https://wa.me/55${whatsappClean}?text=${encodedMessage}`, '_blank');
+  };
+
   const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length > 11) value = value.slice(0, 11);
@@ -764,7 +784,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-12 text-sm uppercase font-black">Entendido</button>
+              <button onClick={handleFinalizeOrder} className="gold-button w-full h-12 text-sm uppercase font-black">Finalizar Pedido</button>
               </>
             )}
             </motion.div>
