@@ -6,7 +6,7 @@ import DriverView from './pages/DriverView';
 
 export default function App() {
   return (
-    <Router>
+    <Router basename="/igrejaresgate">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
