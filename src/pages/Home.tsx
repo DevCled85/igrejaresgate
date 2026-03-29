@@ -648,7 +648,7 @@ export default function Home() {
       <AnimatePresence>
         {orderSuccess && lastOrder && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="wood-card w-full max-w-sm p-8 text-center border-green-500/30">
+          <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="wood-card w-full max-w-sm p-8 text-center border-green-500/30 max-h-[95vh] overflow-y-auto no-scrollbar">
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-900/40"><CheckCircle2 className="w-12 h-12 text-white" /></div>
               <h2 className="text-2xl font-black text-white mb-2 font-serif uppercase tracking-tight">Pedido Recebido!</h2>
               <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
@@ -656,9 +656,9 @@ export default function Home() {
               <div className="space-y-6 mb-8">
                 {lastOrder.pagamento === 'PIX' && (
                   <div className="space-y-4">
-                    <div className="bg-white rounded-2xl p-6 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden shadow-inner">
-                      <div ref={qrRef} className="bg-white p-2">
-                        <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))} size={150} />
+                    <div className="bg-white rounded-2xl p-4 border border-amber-500/20 flex flex-col items-center gap-2 relative overflow-hidden shadow-inner">
+                      <div ref={qrRef} className="bg-white p-1">
+                        <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))} size={130} />
                       </div>
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Escaneie para Pagar</p>
                     </div>
@@ -675,13 +675,13 @@ export default function Home() {
                       </button>
                     </div>
                     {!lastOrder.comprovante_url ? (
-                      <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
+                      <div className="bg-stone-900/50 p-4 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
                         <input type="file" ref={fileInputRef} accept="image/*" onChange={handleUploadReceipt} className="hidden" />
-                        <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex flex-col items-center gap-3">
-                          {uploadingReceipt ? <Loader2 className="w-8 h-8 text-amber-500 animate-spin" /> : <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Camera className="w-6 h-6 text-amber-500" /></div>}
-                          <div className="text-center">
-                            <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
-                            <p className="text-stone-500 text-[10px] mt-1 font-medium italic text-center">Obrigatório para confirmar seu pedido PIX</p>
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex flex-row items-center justify-center gap-4">
+                          {uploadingReceipt ? <Loader2 className="w-6 h-6 text-amber-500 animate-spin" /> : <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0"><Camera className="w-5 h-5 text-amber-500" /></div>}
+                          <div className="text-left">
+                            <p className="text-white font-bold text-xs tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
+                            <p className="text-stone-500 text-[8px] font-medium italic">Obrigatório para confirmar pedido</p>
                           </div>
                         </button>
                       </div>
