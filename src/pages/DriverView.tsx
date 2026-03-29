@@ -110,8 +110,7 @@ export default function DriverView() {
     }
 
     if (order.status_retirada === 'Entregue') {
-      setToast({ message: 'Este voucher já foi utilizado.', type: 'error' });
-      return;
+      // Permitimos abrir para ver o selo de conclusão
     }
 
     setScannedOrder(order);
@@ -122,10 +121,16 @@ export default function DriverView() {
   async function confirmDelivery(id: string) {
     try {
       await mockService.updatePedido(id, { status_retirada: 'Entregue' });
-      setScannedOrder(null);
-      setOrderToConfirm(null);
-      setShowSuccessModal(true);
-      fetchData();
+      
+      // Atualiza o estado local para mostrar o selo antes de fechar tudo
+      setScannedOrder(prev => prev ? { ...prev, status_retirada: 'Entregue' } : null);
+      
+      setTimeout(() => {
+        setScannedOrder(null);
+        setOrderToConfirm(null);
+        setShowSuccessModal(true);
+        fetchData();
+      }, 1500); // 1.5s para apreciar o selo
     } catch (err) {
       console.error('Erro ao confirmar entrega:', err);
       setToast({ message: 'Erro ao confirmar entrega.', type: 'error' });
@@ -630,15 +635,26 @@ export default function DriverView() {
                   onClick={() => setScannedOrder(null)}
                   className="flex-1 px-6 py-4 border border-stone-700 text-stone-400 font-bold rounded-xl hover:bg-stone-800 transition-all"
                 >
-                  Cancelar
+                  {scannedOrder.status_retirada === 'Entregue' ? 'Fechar' : 'Cancelar'}
                 </button>
-                <button 
-                  onClick={() => confirmDelivery(scannedOrder.id)}
-                  className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-900/20 hover:bg-green-500 transition-all flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="w-5 h-5" /> Confirmar
-                </button>
+                {scannedOrder.status_retirada !== 'Entregue' && (
+                  <button 
+                    onClick={() => confirmDelivery(scannedOrder.id)}
+                    className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-900/20 hover:bg-green-500 transition-all flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="w-5 h-5" /> Confirmar
+                  </button>
+                )}
               </div>
+
+              {/* Concluded Seal Overlay */}
+              {scannedOrder.status_retirada === 'Entregue' && (
+                <div className="stamp-seal animate-stamp">
+                  <div className="stamp-inner">
+                    <span className="stamp-text">Entregue</span>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}

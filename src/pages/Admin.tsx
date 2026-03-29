@@ -231,8 +231,7 @@ export default function Admin() {
     }
 
     if (order.status_retirada === 'Entregue') {
-      setToast({ message: 'Este voucher já foi utilizado.', type: 'error' });
-      return;
+      // Permitimos abrir para ver o selo de conclusão
     }
 
     setScannedOrder(order);
@@ -243,10 +242,16 @@ export default function Admin() {
   async function confirmPickup(id: string) {
     try {
       await mockService.updatePedido(id, { status_retirada: 'Entregue' });
-      setScannedOrder(null);
-      setOrderToConfirm(null);
-      setShowSuccessModal(true);
-      fetchData();
+      
+      // Mostrar selo antes de concluir
+      setScannedOrder(prev => prev ? { ...prev, status_retirada: 'Entregue' } : null);
+      
+      setTimeout(() => {
+        setScannedOrder(null);
+        setOrderToConfirm(null);
+        setShowSuccessModal(true);
+        fetchData();
+      }, 1500);
     } catch (err) {
       console.error('Erro ao confirmar retirada:', err);
       setToast({ message: 'Erro ao confirmar retirada.', type: 'error' });
@@ -1791,17 +1796,28 @@ export default function Admin() {
                 <div className="flex gap-4">
                   <button 
                     onClick={() => setScannedOrder(null)}
-                    className="flex-1 px-6 py-4 border border-stone-700 text-stone-400 font-bold rounded-xl hover:bg-stone-800 transition-all"
+                    className="flex-1 px-6 py-4 border border-stone-700 text-stone-400 font-bold rounded-xl hover:bg-stone-800 transition-all font-sans"
                   >
-                    Cancelar
+                    {scannedOrder.status_retirada === 'Entregue' ? 'Fechar' : 'Cancelar'}
                   </button>
-                  <button 
-                    onClick={() => confirmPickup(scannedOrder.id)}
-                    className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-900/20 hover:bg-green-500 transition-all flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle className="w-5 h-5" /> Confirmar Retirada
-                  </button>
+                  {scannedOrder.status_retirada !== 'Entregue' && (
+                    <button 
+                      onClick={() => confirmPickup(scannedOrder.id)}
+                      className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-900/20 hover:bg-green-500 transition-all flex items-center justify-center gap-2 font-sans"
+                    >
+                      <CheckCircle className="w-5 h-5" /> Confirmar
+                    </button>
+                  )}
                 </div>
+
+                {/* Concluded Seal Overlay */}
+                {scannedOrder.status_retirada === 'Entregue' && (
+                  <div className="stamp-seal animate-stamp">
+                    <div className="stamp-inner">
+                      <span className="stamp-text">Entregue</span>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </div>
           )}
