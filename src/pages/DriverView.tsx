@@ -18,7 +18,7 @@ import {
   Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import logoImg from '../images/Favicon_final.png';
 
 export default function DriverView() {
@@ -37,6 +37,7 @@ export default function DriverView() {
   const [isScanning, setIsScanning] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderToConfirm, setOrderToConfirm] = useState<Pedido | null>(null);
+  const [scannerError, setScannerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (codigo) {
@@ -49,27 +50,45 @@ export default function DriverView() {
   }, [codigo]);
 
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
+    let html5QrCode: Html5Qrcode | null = null;
 
     if (isScannerOpen && isScanning) {
-      scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
+      setScannerError(null);
+      html5QrCode = new Html5Qrcode("reader");
+      
+      const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      };
 
-      scanner.render((decodedText) => {
-        handleValidateVoucher(decodedText);
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {
+          handleValidateVoucher(decodedText);
+          setIsScanning(false);
+          if (html5QrCode) {
+            html5QrCode.stop().catch(err => console.error("Error stopping scanner", err));
+          }
+        },
+        (errorMessage) => {
+          // Mantemos silencioso durante o scan normal
+        }
+      ).catch((err) => {
+        console.error("Erro ao iniciar scanner:", err);
+        let msg = "Não foi possível acessar a câmera.";
+        if (err?.includes("NotAllowedError") || err?.includes("Permission denied")) {
+          msg = "Acesso à câmera negado. Por favor, libere a permissão nas configurações do seu navegador.";
+        }
+        setScannerError(msg);
         setIsScanning(false);
-        if (scanner) scanner.clear();
-      }, (error) => {
-        // Silent error for scanning
       });
     }
 
     return () => {
-      if (scanner) {
-        scanner.clear().catch(err => console.error("Failed to clear scanner", err));
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error("Failed to stop scanner", err));
       }
     };
   }, [isScannerOpen, isScanning]);
@@ -521,18 +540,30 @@ export default function DriverView() {
 
                 {/* Camera Scanner */}
                 {!isScanning ? (
-                  <button 
-                    onClick={() => setIsScanning(true)}
-                    className="w-full py-4 bg-stone-800 border border-stone-700 rounded-xl text-white font-bold flex items-center justify-center gap-3 hover:bg-stone-700 transition-all"
-                  >
-                    <QrCode className="w-6 h-6 text-amber-500" /> Ativar Câmera
-                  </button>
+                  <div className="space-y-4">
+                    {scannerError && (
+                      <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                        <p className="text-red-400 text-xs leading-relaxed">{scannerError}</p>
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => setIsScanning(true)}
+                      className="w-full py-4 bg-stone-800 border border-stone-700 rounded-xl text-white font-bold flex items-center justify-center gap-3 hover:bg-stone-700 transition-all"
+                    >
+                      <QrCode className="w-6 h-6 text-amber-500" /> 
+                      {scannerError ? 'Tentar Câmera Novamente' : 'Ativar Câmera'}
+                    </button>
+                  </div>
                 ) : (
-                  <div className="overflow-hidden rounded-xl border-2 border-amber-500/30 bg-black aspect-square relative">
+                  <div className="overflow-hidden rounded-xl border-2 border-amber-500/30 bg-black aspect-square relative flex items-center justify-center">
                     <div id="reader" className="w-full h-full"></div>
+                    <div className="absolute inset-0 border-2 border-amber-500/30 pointer-events-none rounded-xl">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-amber-500/50 rounded-lg"></div>
+                    </div>
                     <button 
                       onClick={() => setIsScanning(false)}
-                      className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg"
+                      className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-full shadow-lg z-10"
                     >
                       Parar Câmera
                     </button>
