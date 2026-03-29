@@ -26,6 +26,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [paymentJustConfirmed, setPaymentJustConfirmed] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -78,9 +79,20 @@ export default function Home() {
       try {
         const pedidos = await mockService.getPedidos();
         const updated = pedidos.find(p => p.id === foundVoucher.id);
-        if (updated && updated.status_retirada === 'Entregue') {
-          setFoundVoucher(updated);
-          setToast({ message: 'Entrega confirmada!', type: 'success' });
+        if (updated) {
+          if (updated.status_retirada === 'Entregue') {
+             setFoundVoucher(updated);
+             setToast({ message: 'Entrega confirmada!', type: 'success' });
+          } else if (updated.status_pagamento === 'Pago' && foundVoucher.status_pagamento !== 'Pago') {
+             setPaymentJustConfirmed(true);
+             setToast({ message: 'Pagamento Confirmado!', type: 'success' });
+             setTimeout(() => {
+               setFoundVoucher(null);
+               setPaymentJustConfirmed(false);
+             }, 3000);
+          } else if (!paymentJustConfirmed) {
+             setFoundVoucher(updated);
+          }
         }
       } catch (err) {
         console.error('Erro ao poll status do voucher:', err);
@@ -88,7 +100,7 @@ export default function Home() {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [foundVoucher]);
+  }, [foundVoucher, paymentJustConfirmed]);
 
   // Polling para o pedido recém-criado (Sucesso imediato)
   useEffect(() => {
@@ -98,9 +110,20 @@ export default function Home() {
       try {
         const pedidos = await mockService.getPedidos();
         const updated = pedidos.find(p => p.id === lastOrder.id);
-        if (updated && updated.status_retirada === 'Entregue') {
-          setLastOrder(updated);
-          setToast({ message: 'Seu pedido foi entregue!', type: 'success' });
+        if (updated) {
+          if (updated.status_retirada === 'Entregue') {
+            setLastOrder(updated);
+            setToast({ message: 'Seu pedido foi entregue!', type: 'success' });
+          } else if (updated.status_pagamento === 'Pago' && lastOrder.status_pagamento !== 'Pago') {
+            setPaymentJustConfirmed(true);
+            setToast({ message: 'Pagamento Confirmado!', type: 'success' });
+            setTimeout(() => {
+              setOrderSuccess(false);
+              setPaymentJustConfirmed(false);
+            }, 3000);
+          } else if (!paymentJustConfirmed) {
+            setLastOrder(updated);
+          }
         }
       } catch (err) {
         console.error('Erro ao poll status do lastOrder:', err);
@@ -108,7 +131,7 @@ export default function Home() {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [lastOrder, orderSuccess]);
+  }, [lastOrder, orderSuccess, paymentJustConfirmed]);
 
   async function fetchData() {
     setLoading(true);
@@ -587,6 +610,16 @@ export default function Home() {
                               </>
                             )}
                           </>
+                        ) : paymentJustConfirmed ? (
+                          <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in zoom-in duration-500 min-h-[300px]">
+                            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-green-900/40">
+                              <CheckCircle2 className="w-12 h-12 text-white" />
+                            </div>
+                            <div className="text-center">
+                              <h2 className="text-2xl font-black text-white font-serif tracking-tight uppercase mb-2">Pagamento Realizado!</h2>
+                              <p className="text-stone-400 text-xs text-balance">O status do seu pedido foi atualizado.</p>
+                            </div>
+                          </div>
                         ) : (
                           <div className="animate-in fade-in zoom-in duration-500 py-4">
                             <div className="flex flex-col items-center mb-8">
@@ -594,44 +627,55 @@ export default function Home() {
                                  <QrCode className="w-8 h-8 text-amber-500" />
                                </div>
                                <h2 className="text-2xl font-black text-white font-serif tracking-tight uppercase mb-1">Pagamento Pendente</h2>
+
                                <p className="text-amber-500 font-black text-3xl">#{foundVoucher.numero_pedido.replace('#', '')}</p>
                             </div>
-                            <div className="bg-white rounded-3xl p-6 mb-6 shadow-2xl space-y-6">
-                              <div className="flex flex-col items-center gap-4">
-                                <div className="bg-white p-2 border border-stone-100 rounded-xl">
-                                  <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'))} size={160} />
+                            <div className="space-y-3 mb-4">
+                              <div className="bg-white rounded-2xl p-3 flex flex-col items-center gap-3 overflow-hidden shadow-inner">
+                                <div className="bg-white p-1">
+                                  <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'))} size={120} />
                                 </div>
-                                <div className="w-full bg-stone-50 rounded-2xl p-4 border border-stone-100 text-left cursor-pointer hover:bg-stone-100 transition-colors" onClick={handleCopyPix}>
-                                  <p className="text-[10px] uppercase font-black text-stone-400 mb-1">Copia e Cola</p>
-                                  <p className="text-[8px] font-mono break-all leading-tight text-stone-500">
+                                <div className="w-full bg-stone-50 rounded-xl p-2 border border-stone-100 text-left cursor-pointer hover:bg-stone-100 transition-colors" onClick={handleCopyPix}>
+                                  <p className="text-[8px] uppercase font-black text-stone-400 mb-0.5">Copia e Cola</p>
+                                  <p className="text-[7px] font-mono break-all leading-tight text-stone-500 line-clamp-2">
                                     {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * foundVoucher.quantidade, foundVoucher.numero_pedido.replace('#', 'PD'))}
                                   </p>
                                 </div>
-                                <button onClick={handleCopyPix} className="w-full py-4 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/30 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all">
-                                  <Copy className="w-4 h-4" /> Copiar Código PIX
+                                <button onClick={handleCopyPix} className={cn("w-full py-3 h-11 rounded-xl border font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-all", copied ? "bg-green-500/10 border-green-500/50 text-green-600" : "bg-amber-500/5 text-amber-600 border-amber-500/20 hover:bg-amber-500/10")}>
+                                  {copied ? <><CheckCircle2 className="w-3 h-3" /> Copiado!</> : <><Copy className="w-3 h-3" /> Copiar Código PIX</>}
                                 </button>
                               </div>
                             </div>
+
                             <div className="space-y-3">
                               {!foundVoucher.comprovante_url ? (
-                                <div className="bg-green-500/5 p-4 rounded-3xl border border-green-500/20 flex flex-col items-center gap-4">
+                                <div className="bg-stone-900/40 p-2.5 rounded-xl border border-dashed border-white/5 group hover:border-amber-500/30 transition-colors">
                                   <input type="file" ref={fileInputRef} accept="image/*" onChange={(e) => handleUploadReceipt(e, 'found')} className="hidden" />
-                                  <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full py-4 bg-green-950/20 hover:bg-green-950/40 text-green-500 border border-green-500/30 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all">
-                                    {uploadingReceipt ? <Loader2 className="animate-spin w-5 h-5" /> : <><CheckCircle2 className="w-5 h-5" /> Comprovante Já Enviado!</>}
+                                  <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex items-center justify-center gap-3">
+                                    {uploadingReceipt ? <Loader2 className="w-5 h-5 text-amber-500 animate-spin" /> : <div className="w-8 h-8 bg-amber-500/10 rounded-full flex items-center justify-center flex-shrink-0"><Camera className="w-4 h-4 text-amber-500" /></div>}
+                                    <div className="text-left">
+                                      <p className="text-white font-bold text-[10px] tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
+                                      <p className="text-stone-500 text-[7px] font-medium leading-none">Obrigatório para confirmar</p>
+                                    </div>
                                   </button>
                                 </div>
                               ) : (
-                                <div className="space-y-3">
-                                  <div className="bg-green-500/10 p-4 rounded-3xl border border-green-500/30 flex items-center justify-center gap-3">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                    <span className="text-green-500 font-bold text-[10px] uppercase tracking-widest">Comprovante já enviado!</span>
+                                <div className="flex flex-col gap-2">
+                                  <div className="bg-green-500/5 p-2 rounded-xl border border-green-500/20 flex items-center justify-center gap-2">
+                                    <CheckCircle2 className="w-3 h-3 text-green-500" />
+                                    <span className="text-green-500 font-bold text-[8px] uppercase tracking-wider">Comprovante Enviado!</span>
                                   </div>
-                                  <a href={foundVoucher.comprovante_url} target="_blank" rel="noreferrer" className="w-full py-4 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-2xl border border-white/5 font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 transition-all">
-                                    <ImageIcon className="w-4 h-4 text-amber-500" /> Ver Comprovante Enviado
+                                  <a 
+                                    href={foundVoucher.comprovante_url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl border border-white/5 font-black uppercase tracking-widest text-[8px] flex items-center justify-center gap-2 transition-all"
+                                  >
+                                    <ImageIcon className="w-3 h-3 text-amber-500" /> Ver Comprovante
                                   </a>
                                 </div>
                               )}
-                              <button onClick={() => setFoundVoucher(null)} className="w-full py-5 bg-amber-600 rounded-2xl text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-amber-950/40 hover:bg-amber-500 transition-all mt-4">Voltar</button>
+                              <button onClick={() => setFoundVoucher(null)} className="w-full py-2 text-stone-500 font-black uppercase tracking-[0.3em] text-[10px] hover:text-white transition-colors mt-2">Voltar</button>
                             </div>
                           </div>
                         )}
@@ -649,11 +693,23 @@ export default function Home() {
         {orderSuccess && lastOrder && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
           <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="wood-card w-full max-w-sm p-4 text-center border-green-500/30 max-h-[96vh] overflow-y-auto no-scrollbar">
-              <div className="flex flex-col items-center mb-4">
-                <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/40 mb-2"><CheckCircle2 className="w-8 h-8 text-white" /></div>
-                <h2 className="text-lg font-black text-white font-serif uppercase tracking-tight">Pedido Recebido!</h2>
-                <p className="text-amber-500 font-black text-xl leading-none">{lastOrder.numero_pedido}</p>
+            {paymentJustConfirmed ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in zoom-in duration-500 min-h-[300px]">
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-green-900/40">
+                  <CheckCircle2 className="w-12 h-12 text-white" />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-2xl font-black text-white font-serif tracking-tight uppercase mb-2">Pagamento Realizado!</h2>
+                  <p className="text-stone-400 text-xs text-balance">Seu pedido foi confirmado pela nossa equipe.</p>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="flex flex-col items-center mb-4">
+                  <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/40 mb-2"><CheckCircle2 className="w-8 h-8 text-white" /></div>
+                  <h2 className="text-lg font-black text-white font-serif uppercase tracking-tight">Pedido Recebido!</h2>
+                  <p className="text-amber-500 font-black text-xl leading-none">{lastOrder.numero_pedido}</p>
+                </div>
               
               <div className="space-y-3 mb-4">
                 {lastOrder.pagamento === 'PIX' && (
@@ -690,15 +746,27 @@ export default function Home() {
                         </button>
                       </div>
                     ) : (
-                      <div className="bg-green-500/5 p-2 rounded-xl border border-green-500/20 flex items-center justify-center gap-2">
-                        <CheckCircle2 className="w-3 h-3 text-green-500" />
-                        <span className="text-green-500 font-bold text-[8px] uppercase tracking-wider">Comprovante Enviado!</span>
+                      <div className="flex flex-col gap-2">
+                        <div className="bg-green-500/5 p-2 rounded-xl border border-green-500/20 flex items-center justify-center gap-2">
+                          <CheckCircle2 className="w-3 h-3 text-green-500" />
+                          <span className="text-green-500 font-bold text-[8px] uppercase tracking-wider">Comprovante Enviado!</span>
+                        </div>
+                        <a 
+                          href={lastOrder.comprovante_url} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl border border-white/5 font-black uppercase tracking-widest text-[8px] flex items-center justify-center gap-2 transition-all"
+                        >
+                          <ImageIcon className="w-3 h-3 text-amber-500" /> Ver Comprovante
+                        </a>
                       </div>
                     )}
                   </div>
                 )}
               </div>
               <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-12 text-sm uppercase font-black">Entendido</button>
+              </>
+            )}
             </motion.div>
           </motion.div>
         )}
