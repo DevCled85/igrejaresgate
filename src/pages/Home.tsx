@@ -501,71 +501,92 @@ export default function Home() {
                         <button type="submit" className="gold-button w-full h-14 text-lg">Localizar Pedido</button>
                       </form>
                     ) : (
-                      <div className="text-center">
+                      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {foundVoucher.status_pagamento === 'Pago' ? (
-                          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div ref={voucherRef} className="bg-white rounded-3xl p-8 text-espresso shadow-2xl mb-6 relative overflow-hidden">
-                              <div className="absolute top-0 left-0 w-full h-2 bg-amber-500" />
-                              <div className="flex justify-between items-start mb-8 text-left">
+                          <>
+                            {foundVoucher.status_retirada === 'Entregue' ? (
+                              <div className="wood-card p-10 flex flex-col items-center text-center space-y-8 border-green-500/30 shadow-[0_0_50px_rgba(34,197,94,0.1)]">
+                                <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-green-900/40 animate-bounce-subtle">
+                                  <CheckCircle2 className="w-14 h-14 text-white" />
+                                </div>
                                 <div>
-                                  <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Voucher Oficial</p>
-                                  <h3 className="text-3xl font-black text-amber-600 font-serif tracking-tighter uppercase leading-none">{foundVoucher.voucher}</h3>
+                                  <h2 className="text-3xl font-black text-white font-serif tracking-tight uppercase mb-2">Pedido Retirado!</h2>
+                                  <p className="text-amber-500 font-bold text-xl mb-4">#{foundVoucher.numero_pedido.replace('#', '')}</p>
+                                  <div className="h-px w-20 bg-amber-500/20 mx-auto mb-4" />
+                                  <p className="text-stone-400 text-sm leading-relaxed px-4">
+                                    Seu tambaqui foi entregue com sucesso.<br/>
+                                    <span className="text-white font-bold italic mt-2 block">Obrigado pela preferência!</span>
+                                  </p>
                                 </div>
-                                <div className="flex flex-col items-center gap-1 bg-green-50 border border-green-100 p-3 rounded-2xl shadow-sm">
-                                  <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/20">
-                                    <CheckCircle2 className="w-4 h-4 text-white" />
-                                  </div>
-                                  <span className="text-[7px] font-black text-green-700 uppercase tracking-widest text-center whitespace-nowrap">Pagamento Confirmado</span>
-                                </div>
+                                <button 
+                                  onClick={() => setFoundVoucher(null)} 
+                                  className="gold-button w-full h-14 text-lg"
+                                >
+                                  Fazer Nova Busca
+                                </button>
                               </div>
-
-                              <div className="space-y-5 text-left border-y border-stone-100 py-6 mb-8">
-                                <div className="grid grid-cols-1 gap-5">
-                                  <div>
-                                    <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Portador</p>
-                                    <p className="font-black text-xl truncate uppercase text-stone-900 leading-tight">{foundVoucher.nome}</p>
-                                  </div>
-                                  <div className="flex justify-between border-t border-stone-50 pt-5">
+                            ) : (
+                              <>
+                                <div ref={voucherRef} className="bg-white rounded-3xl p-8 text-espresso shadow-2xl mb-6 relative overflow-hidden">
+                                  <div className="absolute top-0 left-0 w-full h-2 bg-amber-500" />
+                                  <div className="flex justify-between items-start mb-8 text-left">
                                     <div>
-                                      <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Pedido</p>
-                                      <p className="font-black text-stone-900 text-lg">#{foundVoucher.numero_pedido.replace('#', '')}</p>
+                                      <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Voucher Oficial</p>
+                                      <h3 className="text-3xl font-black text-amber-600 font-serif tracking-tighter uppercase leading-none">{foundVoucher.voucher}</h3>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Quantidade</p>
-                                      <p className="font-black text-stone-900 text-lg">{foundVoucher.quantidade}x</p>
+                                    <div className="flex flex-col items-center gap-1 bg-green-50 border border-green-100 p-3 rounded-2xl shadow-sm">
+                                      <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-900/20">
+                                        <CheckCircle2 className="w-4 h-4 text-white" />
+                                      </div>
+                                      <span className="text-[7px] font-black text-green-700 uppercase tracking-widest text-center whitespace-nowrap">Pagamento Confirmado</span>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
 
-                              <div className="flex flex-col items-center justify-center relative py-2 min-h-[180px]">
-                                {foundVoucher.status_retirada === 'Entregue' ? (
-                                  <div className="relative w-full flex flex-col items-center justify-center">
-                                    <div className="flex flex-col items-center gap-3 opacity-10 grayscale scale-95 transition-all duration-1000">
-                                      <QRCodeSVG value={foundVoucher.voucher || ''} size={150} />
-                                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Apresentar na Retirada</p>
-                                    </div>
-                                    <div className="stamp-seal animate-stamp">
-                                      <div className="stamp-inner">
-                                        <span className="stamp-text">Entregue</span>
+                                  <div className="space-y-5 text-left border-y border-stone-100 py-6 mb-8">
+                                    <div className="grid grid-cols-1 gap-5">
+                                      <div>
+                                        <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Portador</p>
+                                        <p className="font-black text-xl truncate uppercase text-stone-900 leading-tight">{foundVoucher.nome}</p>
+                                      </div>
+                                      <div className="flex justify-between border-t border-stone-50 pt-5">
+                                        <div>
+                                          <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Pedido</p>
+                                          <p className="font-black text-stone-900 text-lg">#{foundVoucher.numero_pedido.replace('#', '')}</p>
+                                        </div>
+                                        <div className="text-right">
+                                          <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-1">Quantidade</p>
+                                          <p className="font-black text-stone-900 text-lg">{foundVoucher.quantidade}x</p>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-                                ) : (
-                                  <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-3">
-                                    <QRCodeSVG value={foundVoucher.voucher || ''} size={150} />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Apresentar na Retirada</p>
-                                  </motion.div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              <button onClick={downloadVoucher} disabled={downloading} className="w-full py-5 bg-amber-600 rounded-2xl text-white font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 shadow-xl shadow-amber-950/40 hover:bg-amber-500 transition-all">
-                                {downloading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Download className="w-5 h-5" /> Baixar Imagem</>}
-                              </button>
-                              <button onClick={() => setFoundVoucher(null)} className="w-full py-2 text-stone-500 font-bold uppercase tracking-[0.3em] text-[10px] hover:text-white transition-colors">Nova Busca</button>
-                            </div>
-                          </div>
+
+                                  <div className="flex flex-col items-center justify-center relative py-2 min-h-[180px]">
+                                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-3">
+                                      <QRCodeSVG value={foundVoucher.voucher || ''} size={150} />
+                                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Apresentar na Retirada</p>
+                                    </motion.div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <button 
+                                    onClick={downloadVoucher} 
+                                    disabled={downloading} 
+                                    className="w-full py-5 bg-amber-600 rounded-2xl text-white font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 shadow-xl shadow-amber-950/40 hover:bg-amber-500 transition-all disabled:opacity-50"
+                                  >
+                                    {downloading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Download className="w-5 h-5" /> Baixar Imagem</>}
+                                  </button>
+                                  <button 
+                                    onClick={() => setFoundVoucher(null)} 
+                                    className="w-full py-2 text-stone-500 font-bold uppercase tracking-[0.3em] text-[10px] hover:text-white transition-colors"
+                                  >
+                                    Nova Busca
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </>
                         ) : (
                           <div className="animate-in fade-in zoom-in duration-500 py-4">
                             <div className="flex flex-col items-center mb-8">
@@ -628,57 +649,72 @@ export default function Home() {
         {orderSuccess && lastOrder && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="wood-card w-full max-w-sm p-8 text-center border-green-500/30">
-              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-900/40"><CheckCircle2 className="w-12 h-12 text-white" /></div>
-              <h2 className="text-2xl font-black text-white mb-2 font-serif uppercase tracking-tight">Pedido Recebido!</h2>
-              <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
-              
-              <div className="space-y-6 mb-8">
-                <div className="bg-white rounded-2xl p-6 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden min-h-[220px] justify-center shadow-inner">
-                  <div ref={qrRef} className={cn("bg-white p-2 transition-all duration-700", lastOrder.status_retirada === 'Entregue' ? "opacity-20 grayscale scale-95" : "opacity-100")}>
-                    <QRCodeSVG value={lastOrder.voucher || lastOrder.numero_pedido} size={150} />
+              {lastOrder.status_retirada === 'Entregue' ? (
+                <div className="flex flex-col items-center space-y-8 animate-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-green-900/40">
+                    <CheckCircle2 className="w-14 h-14 text-white" />
                   </div>
-                  <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] transition-colors", lastOrder.status_retirada === 'Entregue' ? "text-stone-300" : "text-espresso/60")}>Apresentar na Retirada</p>
-                  {lastOrder.status_retirada === 'Entregue' && (
-                    <div className="stamp-seal animate-stamp">
-                      <div className="stamp-inner"><span className="stamp-text">Entregue</span></div>
-                    </div>
-                  )}
+                  <div>
+                    <h2 className="text-3xl font-black text-white font-serif tracking-tight uppercase mb-2">Retirada Concluída!</h2>
+                    <p className="text-amber-500 font-bold text-xl mb-4">#{lastOrder.numero_pedido.replace('#', '')}</p>
+                    <div className="h-px w-20 bg-amber-500/20 mx-auto mb-4" />
+                    <p className="text-stone-400 text-sm leading-relaxed">
+                      Seu pedido foi entregue com sucesso.<br/>
+                      A equipe agradece sua colaboração!
+                    </p>
+                  </div>
+                  <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-14 text-lg">Entendido</button>
                 </div>
-
-                {lastOrder.pagamento === 'PIX' && (
-                  <div className="space-y-4">
-                    <div onClick={handleCopyPix} className={cn("w-full p-4 rounded-2xl border text-left cursor-pointer transition-all", copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100")}>
-                      <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Pagar via PIX (Copia e Cola)</p>
-                      <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
-                        {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 w-full">
-                      <button onClick={handleCopyPix} className={cn("flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all", copied ? "bg-green-500/10 border-green-500/50 text-green-600" : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30")}>
-                        {copied ? <><CheckCircle2 className="w-4 h-4" /> Copiado!</> : <><Copy className="w-4 h-4" /> Copiar Código</>}
-                      </button>
-                    </div>
-                    {!lastOrder.comprovante_url ? (
-                      <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
-                        <input type="file" ref={fileInputRef} accept="image/*" onChange={handleUploadReceipt} className="hidden" />
-                        <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex flex-col items-center gap-3">
-                          {uploadingReceipt ? <Loader2 className="w-8 h-8 text-amber-500 animate-spin" /> : <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Camera className="w-6 h-6 text-amber-500" /></div>}
-                          <div className="text-center">
-                            <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
-                            <p className="text-stone-500 text-[10px] mt-1 font-medium italic text-center">Obrigatório para confirmar seu pedido PIX</p>
-                          </div>
-                        </button>
+              ) : (
+                <>
+                  <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-900/40"><CheckCircle2 className="w-12 h-12 text-white" /></div>
+                  <h2 className="text-2xl font-black text-white mb-2 font-serif uppercase tracking-tight">Pedido Recebido!</h2>
+                  <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
+                  
+                  <div className="space-y-6 mb-8">
+                    <div className="bg-white rounded-2xl p-6 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden min-h-[220px] justify-center shadow-inner">
+                      <div ref={qrRef} className="bg-white p-2">
+                        <QRCodeSVG value={lastOrder.voucher || lastOrder.numero_pedido} size={150} />
                       </div>
-                    ) : (
-                      <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/30 flex items-center justify-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="text-green-500 font-bold text-xs uppercase tracking-wider">Comprovante Enviado!</span>
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-espresso/60">Apresentar na Retirada</p>
+                    </div>
+
+                    {lastOrder.pagamento === 'PIX' && (
+                      <div className="space-y-4">
+                        <div onClick={handleCopyPix} className={cn("w-full p-4 rounded-2xl border text-left cursor-pointer transition-all", copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100")}>
+                          <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Pagar via PIX (Copia e Cola)</p>
+                          <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
+                            {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 w-full">
+                          <button onClick={handleCopyPix} className={cn("flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all", copied ? "bg-green-500/10 border-green-500/50 text-green-600" : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30")}>
+                            {copied ? <><CheckCircle2 className="w-4 h-4" /> Copiado!</> : <><Copy className="w-4 h-4" /> Copiar Código</>}
+                          </button>
+                        </div>
+                        {!lastOrder.comprovante_url ? (
+                          <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
+                            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleUploadReceipt} className="hidden" />
+                            <button onClick={() => fileInputRef.current?.click()} disabled={uploadingReceipt} className="w-full flex flex-col items-center gap-3">
+                              {uploadingReceipt ? <Loader2 className="w-8 h-8 text-amber-500 animate-spin" /> : <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"><Camera className="w-6 h-6 text-amber-500" /></div>}
+                              <div className="text-center">
+                                <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
+                                <p className="text-stone-500 text-[10px] mt-1 font-medium italic text-center">Obrigatório para confirmar seu pedido PIX</p>
+                              </div>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/30 flex items-center justify-center gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-green-500" />
+                            <span className="text-green-500 font-bold text-xs uppercase tracking-wider">Comprovante Enviado!</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-              <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-14 text-lg">Entendido</button>
+                  <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-14 text-lg">Entendido</button>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
