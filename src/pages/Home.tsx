@@ -155,15 +155,17 @@ export default function Home() {
   const handleFinalizeOrder = () => {
     if (!lastOrder) return;
     
-    const message = `*✅ SEU PEDIDO FOI RECEBIDO!*\n\n` +
-      `*Número do Pedido:* ${lastOrder.numero_pedido}\n` +
-      `*Nome:* ${lastOrder.nome}\n` +
-      `*Quantidade:* ${lastOrder.quantidade}x Tambaqui\n` +
-      `*Retirada/Entrega:* ${lastOrder.tipo_entrega}\n` +
-      `${lastOrder.tipo_entrega === 'Entrega' && lastOrder.endereco ? `*Endereço:* ${lastOrder.endereco}\n` : ''}` +
-      `*Pagamento:* ${lastOrder.pagamento}\n` +
-      `*Total:* ${formatCurrency((config?.valor || 50) * lastOrder.quantidade)}\n\n` +
-      `Agradecemos a sua preferência! Para acompanhar seu pedido, digite seu nome ou número do pedido na Área de Busca do nosso site.`;
+    const appUrl = 'https://devcled85.github.io/igrejaresgate/';
+    const message = `✅ *SEU PEDIDO FOI RECEBIDO!*\n\n` +
+      `📦 *Número do Pedido:* ${lastOrder.numero_pedido}\n` +
+      `👤 *Nome:* ${lastOrder.nome}\n` +
+      `🐟 *Quantidade:* ${lastOrder.quantidade}x Tambaqui\n` +
+      `📍 *Retirada/Entrega:* ${lastOrder.tipo_entrega}\n` +
+      `${lastOrder.tipo_entrega === 'Entrega' && lastOrder.endereco ? `🗺️ *Endereço:* ${lastOrder.endereco}\n` : ''}` +
+      `💳 *Pagamento:* ${lastOrder.pagamento}\n\n` +
+      `💰 *Total:* ${formatCurrency((config?.valor || 50) * lastOrder.quantidade)}\n\n` +
+      `🙏 Agradecemos a sua preferência!\n` +
+      `Para acompanhar seu pedido, digite seu *nome* ou *número do pedido* aqui: ${appUrl}`;
       
     const whatsappClean = lastOrder.whatsapp.replace(/\D/g, '');
     const encodedMessage = encodeURIComponent(message);
