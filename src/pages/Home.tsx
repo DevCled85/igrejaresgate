@@ -164,14 +164,14 @@ export default function Home() {
       `${lastOrder.tipo_entrega === 'Entrega' && lastOrder.endereco ? `🗺️ *Endereço:* ${lastOrder.endereco}\n` : ''}` +
       `💳 *Pagamento:* ${lastOrder.pagamento}\n\n` +
       `💰 *Total:* ${formatCurrency((config?.valor || 50) * lastOrder.quantidade)}\n\n` +
-      `🙏 Agradecemos a sua preferência!\n` +
-      `Para acompanhar seu pedido, digite seu *nome* ou *número do pedido* aqui: ${appUrl}`;
+      `🙏 Agradecemos meu irmão(a), Deus te abençõe!\n` +
+      `Para acompanhar seu pedido, digite seu *nome* ou *número do pedido* em resgatar voucher -> aqui: ${appUrl}`;
       
     const whatsappClean = lastOrder.whatsapp.replace(/\D/g, '');
     const encodedMessage = encodeURIComponent(message);
     
     setOrderSuccess(false);
-    window.open(`https://wa.me/55${whatsappClean}?text=${encodedMessage}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?phone=55${whatsappClean}&text=${encodedMessage}`, '_blank');
   };
 
   const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
