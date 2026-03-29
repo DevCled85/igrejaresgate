@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Tambaqui Igreja Resgate - Redirecionando...</title>
+    <script type="text/javascript">
+      // GitHub Pages SPA Hack - HashRouter Redirect
+      // Este script captura acessos diretos a subpastas (ex: /admin) 
+      // e os redireciona para a versão com hash (ex: /#/admin)
+      
+      var l = window.location;
+      
+      // Extrair o caminho após '/igrejaresgate/'
+      var path = l.pathname.replace('/igrejaresgate/', '');
+      
+      // Se o caminho não estiver vazio e não começar com '#', redirecionar
+      if (path && path !== '/' && !path.startsWith('#')) {
+        var newUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/igrejaresgate/#' + (path.startsWith('/') ? path : '/' + path) + l.search + l.hash;
+        l.replace(newUrl);
+      } else {
+        // Redireciona para a home se algo der errado
+        l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/igrejaresgate/#/');
+      }
+    </script>
+  </head>
+  <body>
+    Redirecionando...
+  </body>
+</html>
