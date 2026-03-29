@@ -663,89 +663,92 @@ export default function Home() {
               <h2 className="text-2xl font-black text-white mb-2 font-serif uppercase tracking-tight">Pedido Recebido!</h2>
               <p className="text-amber-500 font-black text-3xl mb-6">{lastOrder.numero_pedido}</p>
               
-              {lastOrder.pagamento === 'PIX' && (
-                <div className="space-y-4 mb-8">
-                  <div className="bg-white rounded-2xl p-4 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden min-h-[220px] justify-center">
-                    <div ref={qrRef} className={cn("bg-white p-2 transition-all duration-500", lastOrder.status_retirada === 'Entregue' ? "opacity-20 grayscale" : "opacity-100")}>
-                      <QRCodeSVG value={generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))} size={150} />
-                    </div>
-                    
-                    {/* Concluded Seal Overlay */}
-                    {lastOrder.status_retirada === 'Entregue' && (
-                      <div className="stamp-seal animate-stamp">
-                        <div className="stamp-inner">
-                          <span className="stamp-text">Entregue</span>
-                        </div>
-                      </div>
-                    )}
+              <div className="space-y-6 mb-8">
+                {/* QR Code Section (Universal for Scanner) */}
+                <div className="bg-white rounded-2xl p-6 border border-amber-500/20 flex flex-col items-center gap-4 relative overflow-hidden min-h-[220px] justify-center shadow-inner">
+                  <div ref={qrRef} className={cn("bg-white p-2 transition-all duration-700", lastOrder.status_retirada === 'Entregue' ? "opacity-20 grayscale scale-95" : "opacity-100")}>
+                    <QRCodeSVG value={lastOrder.voucher || lastOrder.numero_pedido} size={150} />
                   </div>
-
-                  <div 
-                    onClick={handleCopyPix}
-                    className={cn(
-                      "w-full p-4 rounded-2xl border text-left cursor-pointer transition-all",
-                      copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100"
-                    )}
-                  >
-                    <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Copia e Cola</p>
-                    <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
-                      {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 w-full">
-                    <button onClick={handleCopyPix} className={cn(
-                      "flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all",
-                      copied 
-                        ? "bg-green-500/10 border-green-500/50 text-green-600" 
-                        : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30"
-                    )}>
-                      {copied ? (
-                        <><CheckCircle2 className="w-4 h-4" /> Copiado!</>
-                      ) : (
-                        <><Copy className="w-4 h-4" /> Copiar Código</>
-                      )}
-                    </button>
-                    <button onClick={handleDownloadQR} className="flex-1 flex items-center justify-center gap-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 py-3 rounded-xl border border-amber-500/30 text-xs font-bold transition-colors">
-                      <Download className="w-4 h-4" /> Baixar QR
-                    </button>
-                  </div>
+                  <p className={cn("text-[9px] font-black uppercase tracking-[0.2em] transition-colors", lastOrder.status_retirada === 'Entregue' ? "text-stone-300" : "text-espresso/60")}>
+                    Apresentar na Retirada
+                  </p>
                   
-                  {!lastOrder.comprovante_url ? (
-                    <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
-                      <input 
-                        type="file" 
-                        ref={fileInputRef}
-                        accept="image/*" 
-                        onChange={handleUploadReceipt}
-                        className="hidden" 
-                      />
-                      <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingReceipt}
-                        className="w-full flex flex-col items-center gap-3"
-                      >
-                        {uploadingReceipt ? (
-                          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                        ) : (
-                          <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Camera className="w-6 h-6 text-amber-500" />
-                          </div>
-                        )}
-                        <div className="text-center">
-                          <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
-                          <p className="text-stone-500 text-[10px] mt-1 font-medium italic">Obrigatório para confirmar seu pedido PIX</p>
-                        </div>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/30 flex items-center justify-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      <span className="text-green-500 font-bold text-xs uppercase tracking-wider">Comprovante Enviado!</span>
+                  {/* Concluded Seal Overlay */}
+                  {lastOrder.status_retirada === 'Entregue' && (
+                    <div className="stamp-seal animate-stamp">
+                      <div className="stamp-inner">
+                        <span className="stamp-text">Entregue</span>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
+
+                {lastOrder.pagamento === 'PIX' && (
+                  <div className="space-y-4">
+                    <div 
+                      onClick={handleCopyPix}
+                      className={cn(
+                        "w-full p-4 rounded-2xl border text-left cursor-pointer transition-all",
+                        copied ? "bg-green-500/10 border-green-500/30" : "bg-stone-50 border-stone-100 hover:bg-stone-100"
+                      )}
+                    >
+                      <p className={cn("text-[10px] uppercase font-black mb-1 transition-colors", copied ? "text-green-600" : "text-stone-400")}>Pagar via PIX (Copia e Cola)</p>
+                      <p className={cn("text-[9px] font-mono break-all leading-tight transition-colors", copied ? "text-green-700" : "text-stone-500")}>
+                        {generatePixPayload(config?.chave_pix || '', (config?.valor || 50) * lastOrder.quantidade, lastOrder.numero_pedido.replace('#', 'PD'))}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 w-full">
+                      <button onClick={handleCopyPix} className={cn(
+                        "flex-1 flex items-center justify-center gap-3 py-3 rounded-xl border text-xs font-bold transition-all",
+                        copied 
+                          ? "bg-green-500/10 border-green-500/50 text-green-600" 
+                          : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/30"
+                      )}>
+                        {copied ? (
+                          <><CheckCircle2 className="w-4 h-4" /> Copiado!</>
+                        ) : (
+                          <><Copy className="w-4 h-4" /> Copiar Código</>
+                        )}
+                      </button>
+                    </div>
+                    
+                    {!lastOrder.comprovante_url ? (
+                      <div className="bg-stone-900/50 p-6 rounded-2xl border border-dashed border-white/10 group hover:border-amber-500/50 transition-colors">
+                        <input 
+                          type="file" 
+                          ref={fileInputRef}
+                          accept="image/*" 
+                          onChange={handleUploadReceipt}
+                          className="hidden" 
+                        />
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingReceipt}
+                          className="w-full flex flex-col items-center gap-3"
+                        >
+                          {uploadingReceipt ? (
+                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                          ) : (
+                            <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Camera className="w-6 h-6 text-amber-500" />
+                            </div>
+                          )}
+                          <div className="text-center">
+                            <p className="text-white font-bold text-sm tracking-tight">{uploadingReceipt ? 'Enviando...' : 'Anexar Comprovante'}</p>
+                            <p className="text-stone-500 text-[10px] mt-1 font-medium italic text-center">Obrigatório para confirmar seu pedido PIX</p>
+                          </div>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-green-500/10 p-4 rounded-2xl border border-green-500/30 flex items-center justify-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <span className="text-green-500 font-bold text-xs uppercase tracking-wider">Comprovante Enviado!</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <button onClick={() => setOrderSuccess(false)} className="gold-button w-full h-14 text-lg">Entendido</button>
             </motion.div>
           </motion.div>
