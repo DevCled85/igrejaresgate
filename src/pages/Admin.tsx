@@ -57,6 +57,7 @@ export default function Admin() {
   const [newDriver, setNewDriver] = useState({ nome: '', whatsapp: '' });
   const [selectedEntregador, setSelectedEntregador] = useState<Entregador | null>(null);
   const [adminPerfis, setAdminPerfis] = useState<AdminPerfil[]>([]);
+  const [editingAdmin, setEditingAdmin] = useState<AdminPerfil | null>(null);
   const [newAdmin, setNewAdmin] = useState({ usuario: '', senha: '' });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentUser, setCurrentUser] = useState(localStorage.getItem('admin_user') || 'Admin');
@@ -167,9 +168,9 @@ export default function Admin() {
       // Não sobrescreve as configurações se o polling é silencioso e o usuário está editando a aba de config
       if (!silent || activeTab !== 'config') {
         setConfig(configData);
-        // Filtra o usuário 'dev' para que ele fique oculto na listagem de acessos
-        setAdminPerfis(perfisData.filter(p => p.usuario.toLowerCase() !== 'dev'));
       }
+      // Sempre atualiza perfis e outras listas de base
+      setAdminPerfis(perfisData.filter(p => p.usuario.toLowerCase() !== 'dev'));
       setEntregadores(entregadoresData);
       setPedidos(pedidosData.sort((a, b) => {
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -507,85 +508,85 @@ export default function Admin() {
             <p className="text-stone-500 text-xs uppercase tracking-widest font-bold">Gerenciamento Tambaqui Igreja Resgate</p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-4 lg:gap-8">
-            {/* User & Time Info */}
-            <div className="flex items-center gap-6 pr-6 border-r border-white/10">
-              <div className="flex flex-col items-end">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 w-full lg:w-auto mt-4 lg:mt-0 bg-stone-900/30 lg:bg-transparent p-4 lg:p-0 rounded-2xl lg:rounded-none border lg:border-none border-stone-800/50">
+            {/* User Info & Bell Row */}
+            <div className="flex items-center justify-between w-full lg:w-auto gap-6 lg:pr-6 lg:border-r lg:border-white/10">
+              <div className="flex flex-col items-start lg:items-end flex-1">
                 <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
                   <User className="w-4 h-4" />
                   {currentUser}
                 </div>
-                <div className="flex items-center gap-3 text-stone-400 text-[11px] mt-0.5">
-                  <span className="flex items-center gap-1 font-medium bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                <div className="flex items-center gap-2 text-stone-400 text-[10px] mt-1.5 flex-wrap">
+                  <span className="flex items-center gap-1 font-medium bg-white/5 px-2 py-0.5 rounded border border-white/5 whitespace-nowrap">
                     <Calendar className="w-3 h-3 text-amber-600/60" />
-                    {new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(currentTime)}
+                    {new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(currentTime)}
                   </span>
-                  <span className="flex items-center gap-1 font-mono bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                  <span className="flex items-center gap-1 font-mono bg-white/5 px-2 py-0.5 rounded border border-white/5 whitespace-nowrap">
                     <Clock className="w-3 h-3 text-amber-600/60" />
-                    {currentTime.toLocaleTimeString('pt-BR')}
+                    {currentTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
                   </span>
                 </div>
               </div>
-            </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <button 
-                onClick={() => {
-                  setShowNotificacoes(!showNotificacoes);
-                  if (!showNotificacoes) markAllNotifsAsRead();
-                }}
-                className="w-10 h-10 bg-espresso rounded-full flex items-center justify-center border border-espresso-border hover:bg-espresso-light transition relative"
-              >
-                <Bell className="w-5 h-5 text-amber-500" />
-                {notificacoes.filter(n => !n.lida).length > 0 && (
-                  <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-stone-800 animate-pulse" />
-                )}
-              </button>
+              
+              <div className="relative shrink-0">
+                <button 
+                  onClick={() => {
+                    setShowNotificacoes(!showNotificacoes);
+                    if (!showNotificacoes) mockService.getNotificacoes().then(() => {}); // Opcional, mockService n faz read real assim
+                  }}
+                  className="w-11 h-11 lg:w-10 lg:h-10 bg-espresso rounded-full flex items-center justify-center border border-espresso-border hover:bg-espresso-light transition relative shadow-lg"
+                >
+                  <Bell className="w-5 h-5 text-amber-500" />
+                  {notificacoes.filter(n => !n.lida).length > 0 && (
+                    <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-stone-800 animate-pulse" />
+                  )}
+                </button>
 
-              <AnimatePresence>
-                {showNotificacoes && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    className="absolute top-12 right-0 w-80 bg-espresso border border-espresso-border rounded-xl shadow-2xl overflow-hidden"
-                  >
-                    <div className="p-4 bg-espresso-light border-b border-espresso-border flex justify-between items-center">
-                      <h3 className="text-white font-bold">Notificações</h3>
-                      <button onClick={() => setShowNotificacoes(false)} className="text-stone-400 hover:text-white">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notificacoes.length > 0 ? (
-                        notificacoes.map(n => (
-                          <div key={n.id} className={`p-4 border-b border-espresso-border last:border-0 ${!n.lida ? 'bg-amber-900/10' : ''}`}>
-                            <p className="text-sm text-stone-300">{n.mensagem}</p>
-                            <p className="text-[10px] text-stone-500 mt-2 font-mono">
-                              {new Date(n.data).toLocaleTimeString('pt-BR')}
-                            </p>
+                <AnimatePresence>
+                  {showNotificacoes && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                      className="absolute top-14 right-0 w-[300px] sm:w-80 bg-espresso border border-espresso-border rounded-xl shadow-2xl overflow-hidden z-[60]"
+                    >
+                      <div className="p-4 bg-espresso-light border-b border-espresso-border flex justify-between items-center">
+                        <h3 className="text-white font-bold">Notificações</h3>
+                        <button onClick={() => setShowNotificacoes(false)} className="text-stone-400 hover:text-white">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notificacoes.length > 0 ? (
+                          notificacoes.map(n => (
+                            <div key={n.id} className={`p-4 border-b border-espresso-border last:border-0 ${!n.lida ? 'bg-amber-900/10' : ''}`}>
+                              <p className="text-sm text-stone-300">{n.mensagem}</p>
+                              <p className="text-[10px] text-stone-500 mt-2 font-mono">
+                                {new Date(n.data).toLocaleTimeString('pt-BR')}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-8 text-center text-stone-500">
+                            <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                            <p className="text-sm">Nenhuma notificação</p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="p-8 text-center text-stone-500">
-                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                          <p className="text-sm">Nenhuma notificação</p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
             {activeTab === 'orders' && (
-              <button onClick={exportToExcel} className="gold-outline flex items-center gap-2">
-                <Download className="w-4 h-4" /> Exportar Excel
-              </button>
+              <div className="w-full lg:w-auto pt-3 border-t border-stone-800/50 lg:border-none lg:pt-0">
+                <button onClick={exportToExcel} className="gold-outline w-full lg:w-auto flex items-center justify-center gap-2">
+                  <Download className="w-4 h-4" /> Exportar Excel
+                </button>
+              </div>
             )}
           </div>
-        </div>
       </header>
 
         <AnimatePresence mode="wait">
@@ -1627,18 +1628,9 @@ export default function Admin() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => {
-                              const newPass = prompt('Nova senha para ' + perfil.usuario, '');
-                              if (newPass) {
-                                mockService.updateAdminPerfil({ ...perfil, senha: newPass })
-                                  .then(() => {
-                                    setToast({ message: 'Senha atualizada!', type: 'success' });
-                                    fetchData(true);
-                                  });
-                              }
-                            }}
+                            onClick={() => setEditingAdmin(perfil)}
                             className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"
-                            title="Alterar Senha"
+                            title="Editar Acesso"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -1707,6 +1699,77 @@ export default function Admin() {
                 </div>
               </motion.div>
             )}
+        </AnimatePresence>
+
+        {/* Edit Admin Modal */}
+        <AnimatePresence>
+          {editingAdmin && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="wood-card w-full max-w-sm p-6 relative"
+              >
+                <button 
+                  onClick={() => setEditingAdmin(null)}
+                  className="absolute top-4 right-4 text-stone-500 hover:text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+
+                <h2 className="text-xl font-bold text-white font-serif mb-6 flex items-center gap-2">
+                  <Edit2 className="w-5 h-5 text-amber-500" /> Editar Acesso
+                </h2>
+
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setSaving(true);
+                    try {
+                      await mockService.updateAdminPerfil(editingAdmin);
+                      setToast({ message: 'Acesso atualizado!', type: 'success' });
+                      setEditingAdmin(null);
+                      await fetchData(true);
+                    } catch (err) {
+                      setToast({ message: 'Erro ao atualizar.', type: 'error' });
+                    } finally {
+                      setSaving(false);
+                    }
+                  }} 
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="label-text">Usuário</label>
+                    <input 
+                      type="text" 
+                      className="input-field py-2"
+                      value={editingAdmin.usuario}
+                      onChange={e => setEditingAdmin({...editingAdmin, usuario: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="label-text">Senha</label>
+                    <input 
+                      type="text" 
+                      className="input-field py-2"
+                      value={editingAdmin.senha}
+                      onChange={e => setEditingAdmin({...editingAdmin, senha: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <button 
+                    disabled={saving}
+                    type="submit" 
+                    className="w-full py-2.5 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 transition-all text-sm uppercase flex items-center justify-center"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar Alterações'}
+                  </button>
+                </form>
+              </motion.div>
+            </div>
+          )}
         </AnimatePresence>
 
         {/* Edit Modal */}
